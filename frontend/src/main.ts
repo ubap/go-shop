@@ -1,41 +1,45 @@
-const app = document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML = ` 
-	<h1>Hello from TypeScript!</h1> 
-`;
+//
+
+const itemInput = document.querySelector<HTMLInputElement>('#item-input')!;
+// const addBtn = document.getElementById('add-btn');
+const list = document.getElementById('list')!;
+const completedList = document.getElementById('completed-list')!;
+const suggestionsContainer = document.getElementById('suggestions')!;
 
 
-// Select the element once and reuse it. It's more efficient.
-const apiResultDiv = document.querySelector<HTMLDivElement>('#api-call-result');
-
-async function apiCall(): Promise<void> {
-    // Make sure the element was actually found before trying to use it.
-    if (!apiResultDiv) {
-        console.error("Could not find the element with ID #api-call-result");
-        return;
+itemInput.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        addItem();
     }
+});
 
-    try {
-        // "await" pauses the function until the fetch is complete.
-        const response = await fetch("/api");
 
-        // Check if the network request was successful.
-        if (!response.ok) {
-            // Throw an error to be caught by the catch block.
-            throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
+const addItem = () => {
+    const itemText = itemInput.value.trim();
+    if (itemText !== '') {
+        const li = document.createElement('li');
 
-        // "await" pauses again until the response body is read as text.
-        const message = await response.text();
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.addEventListener('change', function() {
+            li.classList.toggle('bought');
+            if (this.checked) {
+                completedList.appendChild(li);
+            } else {
+                list.appendChild(li);
+            }
+        });
 
-        // Now, update the DOM with the final text content.
-        apiResultDiv.innerHTML = message;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'item-text';
+        textSpan.textContent = itemText;
 
-    } catch (error) {
-        // Handle any errors that occurred during the fetch.
-        console.error("There was a problem with the fetch operation:", error);
-        apiResultDiv.innerHTML = "Failed to fetch data from the API.";
+        li.appendChild(checkbox);
+        li.appendChild(textSpan);
+        list.appendChild(li);
+
+        itemInput.value = '';
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
     }
-}
-
-// Example of how to call it:
-apiCall();
+};

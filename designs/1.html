@@ -151,6 +151,46 @@
             'Milk', 'Onions', 'Pasta', 'Potatoes', 'Rice', 'Salt', 'Sugar', 'Tea', 'Tomatoes', 'Yogurt'
         ];
 
+        // Function to add a new item
+        const addItem = () => {
+            const itemText = itemInput.value.trim();
+            if (itemText !== '') {
+                const li = document.createElement('li');
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.addEventListener('change', function() {
+                    li.classList.toggle('bought');
+                    if (this.checked) {
+                        completedList.appendChild(li);
+                    } else {
+                        list.appendChild(li);
+                    }
+                });
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'item-text';
+                textSpan.textContent = itemText;
+
+                li.appendChild(checkbox);
+                li.appendChild(textSpan);
+                list.appendChild(li);
+
+                itemInput.value = '';
+                suggestionsContainer.innerHTML = '';
+                suggestionsContainer.style.display = 'none';
+            }
+        };
+
+        // Event listener for the add button
+        addBtn.addEventListener('click', addItem);
+
+        // Event listener for pressing Enter in the input field
+        itemInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addItem();
+            }
+        });
 
         // Handle suggestions
         itemInput.addEventListener('input', function() {
@@ -190,6 +230,5 @@
     });
 </script>
 
-<script type="module" src="/src/main.ts"></script>
 </body>
 </html>
