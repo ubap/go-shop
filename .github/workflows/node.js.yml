@@ -11,11 +11,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+
+defaults:
+  run:
+    working-directory: frontend
+
 jobs:
   build:
-    defaults:
-      run:
-        working-directory: frontend
+
 
     runs-on: ubuntu-latest
 
