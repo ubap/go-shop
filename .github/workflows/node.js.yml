@@ -1,39 +1,84 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# .github/workflows/ci.yml
 
-name: Node.js CI
+name: Full Stack CI
 
-
-
+# This workflow runs on pushes or pull requests to the main branch
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-
-defaults:
-  run:
-    working-directory: frontend
-
 jobs:
-  build:
-
-
+  # Job 1: Build and test the frontend
+  frontend-ci:
+    name: Frontend CI
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        # For an application, you usually only need to test against one LTS version
+        # Testing against multiple is more for libraries.
+        node-version: [20.x]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          # Use npm caching for faster installs
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        # 'npm ci' is recommended for CI. It uses package-lock.json for a clean,
+        # reproducible install, which is faster and safer than 'npm install'.
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Build project
+        run: npm run build --if-present
+        working-directory: ./frontend
+
+      - name: Run tests
+        run: npm test
+        working-directory: ./frontend
+
+  # Job 2: Build and test the backend
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        # Use the official action to set up the Go environment
+        uses: actions/setup-go@v5
+        with:
+          # Specify your Go version, ideally matching your go.mod file
+          go-version: '1.22'
+
+      - name: Install dependencies
+        # 'go mod tidy' is a good practice to ensure the go.mod file is clean
+        run: go mod tidy
+        working-directory: ./backend
+
+      - name: Check formatting
+        # It's good practice to fail the build if the code isn't formatted
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Go code is not formatted:"
+            gofmt -s -l .
+            exit 1
+          fi
+        working-directory: ./backend
+
+      - name: Run tests
+        # This will run all tests found in files ending with _test.go
+        run: go test -v ./...
+        working-directory: ./backend
