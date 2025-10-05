@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ "main" ]
 
+defaults:
+  run:
+    working-directory: ./frontend
+
 jobs:
   # Job 1: Build and test the frontend
   frontend-ci:
@@ -37,7 +41,6 @@ jobs:
         # 'npm ci' is recommended for CI. It uses package-lock.json for a clean,
         # reproducible install, which is faster and safer than 'npm install'.
         run: npm ci
-        working-directory: ./frontend
 
       - name: Build project
         run: npm run build --if-present
