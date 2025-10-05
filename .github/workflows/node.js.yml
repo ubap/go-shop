@@ -9,15 +9,16 @@ on:
   pull_request:
     branches: [ "main" ]
 
-defaults:
-  run:
-    working-directory: ./frontend
 
 jobs:
   # Job 1: Build and test the frontend
   frontend-ci:
     name: Frontend CI
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
 
     strategy:
       matrix:
@@ -44,16 +45,18 @@ jobs:
 
       - name: Build project
         run: npm run build --if-present
-        working-directory: ./frontend
 
       - name: Run tests
         run: npm test
-        working-directory: ./frontend
 
   # Job 2: Build and test the backend
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
 
     steps:
       - name: Checkout repository
@@ -69,7 +72,6 @@ jobs:
       - name: Install dependencies
         # 'go mod tidy' is a good practice to ensure the go.mod file is clean
         run: go mod tidy
-        working-directory: ./backend
 
       - name: Check formatting
         # It's good practice to fail the build if the code isn't formatted
@@ -79,9 +81,7 @@ jobs:
             gofmt -s -l .
             exit 1
           fi
-        working-directory: ./backend
 
       - name: Run tests
         # This will run all tests found in files ending with _test.go
         run: go test -v ./...
-        working-directory: ./backend
