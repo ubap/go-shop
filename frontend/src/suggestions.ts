@@ -1,11 +1,9 @@
 export class BasketItem {
     name: string;
-    toBuy: boolean;
     lastModified: Date;
 
-    constructor(name: string, toBuy: boolean, lastModified: Date) {
+    constructor(name: string, lastModified: Date) {
         this.name = name;
-        this.toBuy = toBuy;
         this.lastModified = lastModified;
     }
 }
@@ -19,7 +17,6 @@ export class BasketItem {
 // TODO: This needs more effective data structures
 export function suggest(query: string, basket: BasketItem[]): BasketItem {
     let item = basket
-        .filter((item: BasketItem) => !item.toBuy)
         .filter((item: BasketItem) => item.name.toLowerCase().startsWith(query.toLowerCase()))
         .sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
         [0];
