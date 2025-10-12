@@ -1,10 +1,16 @@
 export class BasketItem {
     name: string;
     lastModified: Date;
+    htmlElement : HTMLLIElement;
 
-    constructor(name: string, lastModified: Date) {
+    constructor(name: string, htmlElement: HTMLLIElement) {
         this.name = name;
-        this.lastModified = lastModified;
+        this.htmlElement = htmlElement;
+        this.lastModified = new Date();
+    }
+
+    touch() {
+        this.lastModified = new Date();
     }
 }
 

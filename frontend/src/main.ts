@@ -1,8 +1,7 @@
 //
 import {BasketItem} from "./suggestions";
+import {BasketItemManager} from "./basketItemManager";
 
-const itemsToBuy: BasketItem[] = [];
-const itemsBought: BasketItem[] = [];
 
 /**
  * The application does not have a concept of users, only baskets. A basket is secured and accessed solely by its unique URL.
@@ -32,6 +31,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const completedList = document.querySelector<HTMLUListElement>('#completed-list')!;
     const suggestionsContainer = document.querySelector<HTMLDivElement>('#suggestions')!;
 
+    const basketItemManager = new BasketItemManager(createBasketItemElement,
+        (basketItem) => {
+            list.prepend(basketItem.htmlElement);
+
+            basketItem.htmlElement.classList.remove('bought');
+            checkboxForBasketItemElement(basketItem.htmlElement).checked = false;
+        },
+        (basketItem) => {
+            completedList.prepend(basketItem.htmlElement);
+
+            basketItem.htmlElement.classList.add('bought');
+            checkboxForBasketItemElement(basketItem.htmlElement).checked = true;
+        }
+    );
+
+
     itemInput.addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
             addItem();
@@ -43,20 +58,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (itemText === '') {
             return;
         }
-        const li = document.createElement('li');
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.addEventListener('change', checkBoxClickedListener(li, completedList, list));
-
-        const textSpan = document.createElement('span');
-        textSpan.className = 'item-text';
-        textSpan.textContent = itemText;
-
-        li.appendChild(checkbox);
-        li.appendChild(textSpan);
-        list.appendChild(li);
-        itemsToBuy.push(new BasketItem(itemText, new Date()))
+        let basketItem = basketItemManager.getBasketItem(itemText);
+        if (basketItem === undefined) {
+            basketItem = basketItemManager.createBasketItem(itemText)
+        }
+        basketItemManager.addToBuyBasket(basketItem);
+        basketItem.touch();
 
         itemInput.value = '';
         suggestionsContainer.innerHTML = '';
@@ -64,15 +72,44 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     addBtn.onclick = addItem;
+
+    function createBasketItemElement(itemName: string): HTMLLIElement {
+        const li = document.createElement('li');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.addEventListener('change', checkBoxClickedListener(li));
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'item-text';
+        textSpan.textContent = itemName;
+
+        li.appendChild(checkbox);
+        li.appendChild(textSpan);
+
+        return li;
+    }
+
+    function itemNameFromBasketItemElement(htmlElement: HTMLLIElement): string {
+        return htmlElement.getElementsByTagName('span')[0].textContent;
+    }
+
+    function checkboxForBasketItemElement(htmlElement: HTMLLIElement): HTMLInputElement {
+        return htmlElement.getElementsByTagName('input')[0]
+    }
+
+    function checkBoxClickedListener(li: HTMLLIElement) {
+        return function (this: HTMLInputElement) {
+            let itemName = itemNameFromBasketItemElement(li);
+            let basketItem = basketItemManager.getBasketItem(itemName)!;
+            if (this.checked) {
+                basketItemManager.addToBoughtBasket(basketItem);
+            } else {
+                basketItemManager.addToBuyBasket(basketItem);
+            }
+        };
+    }
 });
 
-function checkBoxClickedListener(li: HTMLLIElement, completedList: HTMLUListElement, list: HTMLUListElement) {
-    return function (this: HTMLInputElement) {
-        li.classList.toggle('bought');
-        if (this.checked) {
-            completedList.appendChild(li);
-        } else {
-            list.appendChild(li);
-        }
-    };
-}
+
+
