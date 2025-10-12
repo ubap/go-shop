@@ -1,13 +1,13 @@
 import {expect, test} from "vitest";
-import {BasketItem, suggest} from "./suggestions";
+import {BasketItem} from "./basketItem";
+import {suggest} from "./suggestions";
 
 test('basic suggest, 1 word', () => {
     let basket: BasketItem[] = [
-        new BasketItem("water", new Date("2018-03-08T08:15:16.097Z")),
-        new BasketItem("apple", new Date("2018-03-08T09:15:16.097Z")),
-        new BasketItem("potato", new Date("2018-03-08T10:15:16.097Z")),
-        new BasketItem("juice", new Date("2018-03-08T11:15:16.097Z")),
-        new BasketItem("Walnuts", new Date("2018-03-08T12:15:16.097Z")),
+        basketItemLater("apple"),
+        basketItemLater("potato"),
+        basketItemLater("juice"),
+        basketItemLater("Walnuts"),
     ];
 
     let query = "WA";
@@ -16,3 +16,18 @@ test('basic suggest, 1 word', () => {
 
     expect(basketItem.name).toBe("Walnuts");
 });
+
+
+let mockedTime = new Date().getTime();
+
+function timeTick(): Date {
+    mockedTime += 1;
+    return new Date(mockedTime);
+}
+
+function basketItemLater(text: string) {
+    let basketItem = new BasketItem(text);
+    basketItem.lastModified = timeTick();
+    return basketItem;
+}
+
