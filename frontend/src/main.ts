@@ -1,5 +1,6 @@
 import {BasketItem} from "./basketItem";
 import {BasketItemManager} from "./basketItemManager";
+import {SyncService} from "./syncService";
 
 
 /**
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             basketItemElement.classList.remove('bought');
             checkboxForBasketItemElement(basketItemElement).checked = false;
+            syncService.syncItemAddedToBuy(basketItem);
         },
         (basketItem) => {
             const basketItemElement = basketItemElementFromBasketItem(basketItem);
@@ -44,8 +46,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             basketItemElement.classList.add('bought');
             checkboxForBasketItemElement(basketItemElement).checked = true;
+            syncService.syncItemBought(basketItem);
         }
     );
+
+    const syncService = new SyncService(basketItemManager).start();
 
     const addItemFromUI = () => {
         const itemText = itemInput.value.trim();
