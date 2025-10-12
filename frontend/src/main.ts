@@ -1,5 +1,4 @@
-//
-import {BasketItem} from "./suggestions";
+import {BasketItem} from "./basketItem";
 import {BasketItemManager} from "./basketItemManager";
 
 
@@ -20,8 +19,6 @@ import {BasketItemManager} from "./basketItemManager";
  * If a user adds an item that is already in the itemsToBuy list, that item should be moved to the top of the list.
  * If the item is in the itemsBought list, it should be removed from itemsBought and added to the top of the itemsToBuy list.
  *
- * TODO: Decide on a rendering strategy for the lists. We could use an observable collection to separate state from the UI, or have each item keep a direct reference to its corresponding HTML element.
- * TODO: Implement ^, the rendering should be local, not distributed across multiple methods.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -31,49 +28,48 @@ document.addEventListener('DOMContentLoaded', function () {
     const completedList = document.querySelector<HTMLUListElement>('#completed-list')!;
     const suggestionsContainer = document.querySelector<HTMLDivElement>('#suggestions')!;
 
+    const basketItemElementsByText: Map<string, HTMLLIElement> = new Map();
+
     const basketItemManager = new BasketItemManager(createBasketItemElement,
         (basketItem) => {
-            list.prepend(basketItem.htmlElement);
+            const basketItemElement = basketItemElementFromBasketItem(basketItem);
+            list.prepend(basketItemElement);
 
-            basketItem.htmlElement.classList.remove('bought');
-            checkboxForBasketItemElement(basketItem.htmlElement).checked = false;
+            basketItemElement.classList.remove('bought');
+            checkboxForBasketItemElement(basketItemElement).checked = false;
         },
         (basketItem) => {
-            completedList.prepend(basketItem.htmlElement);
+            const basketItemElement = basketItemElementFromBasketItem(basketItem);
+            completedList.prepend(basketItemElement);
 
-            basketItem.htmlElement.classList.add('bought');
-            checkboxForBasketItemElement(basketItem.htmlElement).checked = true;
+            basketItemElement.classList.add('bought');
+            checkboxForBasketItemElement(basketItemElement).checked = true;
         }
     );
 
-
-    itemInput.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            addItem();
-        }
-    });
-
-    const addItem = () => {
+    const addItemFromUI = () => {
         const itemText = itemInput.value.trim();
         if (itemText === '') {
             return;
         }
-
-        let basketItem = basketItemManager.getBasketItem(itemText);
-        if (basketItem === undefined) {
-            basketItem = basketItemManager.createBasketItem(itemText)
-        }
-        basketItemManager.addToBuyBasket(basketItem);
-        basketItem.touch();
+        basketItemManager.addItem(itemText);
 
         itemInput.value = '';
         suggestionsContainer.innerHTML = '';
         suggestionsContainer.style.display = 'none';
     };
 
-    addBtn.onclick = addItem;
+    addBtn.onclick = addItemFromUI;
+    itemInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            addItemFromUI();
+        }
+    });
 
-    function createBasketItemElement(itemName: string): HTMLLIElement {
+    /**
+     * Create new HTML element for the basket item. Doesn't add it to the document.
+     */
+    function createBasketItemElement(basketItem: BasketItem): void {
         const li = document.createElement('li');
 
         const checkbox = document.createElement('input');
@@ -82,16 +78,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const textSpan = document.createElement('span');
         textSpan.className = 'item-text';
-        textSpan.textContent = itemName;
+        textSpan.textContent = basketItem.name;
 
         li.appendChild(checkbox);
         li.appendChild(textSpan);
 
-        return li;
+        basketItemElementsByText.set(basketItem.name, li);
     }
 
     function itemNameFromBasketItemElement(htmlElement: HTMLLIElement): string {
         return htmlElement.getElementsByTagName('span')[0].textContent;
+    }
+
+    function basketItemElementFromBasketItem(basketItem: BasketItem): HTMLLIElement {
+        return basketItemElementsByText.get(basketItem.name)!;
     }
 
     function checkboxForBasketItemElement(htmlElement: HTMLLIElement): HTMLInputElement {

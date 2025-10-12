@@ -1,18 +1,4 @@
-export class BasketItem {
-    name: string;
-    lastModified: Date;
-    htmlElement : HTMLLIElement;
-
-    constructor(name: string, htmlElement: HTMLLIElement) {
-        this.name = name;
-        this.htmlElement = htmlElement;
-        this.lastModified = new Date();
-    }
-
-    touch() {
-        this.lastModified = new Date();
-    }
-}
+import {BasketItem} from "./basketItem";
 
 /**
  * 1. item that  name starts with the query, if multiple then return the most recently modified
