@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (itemText === '') {
             return;
         }
-        basketItemManager.addItem(itemText);
+        basketItemManager.addNewItem(itemText);
         const basketItem = basketItemManager.getBasketItem(itemText)!;
         syncService.syncItemAddedToBuy(basketItem);
 

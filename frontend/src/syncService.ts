@@ -50,9 +50,11 @@ export class SyncService {
     }
 
     onMessageReceived(message: WebSocketMessage): void {
+        // TODO: The next improvement is should be here.
+        // around the methods in basketItemManager - rethink it's interface
         switch (message.method) {
             case 'itemAddedToBuy':
-                this.basketItemManager.addItem(message.payload.name);
+                this.basketItemManager.addNewItem(message.payload.name);
                 break;
             case 'itemBought':
                 this.basketItemManager.addToBoughtBasket(message.payload);

@@ -18,7 +18,7 @@ export class BasketItemManager {
         this.uiAddToBoughtBasket = uiAddToBoughtBasket;
     }
 
-    addItem(itemText: string) {
+    addNewItem(itemText: string) {
         let basketItem = this.getBasketItem(itemText);
         if (basketItem === undefined) {
             basketItem = this.createBasketItem(itemText)
