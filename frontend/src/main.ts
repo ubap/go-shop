@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             basketItemElement.classList.remove('bought');
             checkboxForBasketItemElement(basketItemElement).checked = false;
-            syncService.syncItemAddedToBuy(basketItem);
         },
         (basketItem) => {
             const basketItemElement = basketItemElementFromBasketItem(basketItem);
@@ -46,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             basketItemElement.classList.add('bought');
             checkboxForBasketItemElement(basketItemElement).checked = true;
-            syncService.syncItemBought(basketItem);
         }
     );
 
@@ -58,6 +56,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         basketItemManager.addItem(itemText);
+        const basketItem = basketItemManager.getBasketItem(itemText)!;
+        syncService.syncItemAddedToBuy(basketItem);
 
         itemInput.value = '';
         suggestionsContainer.innerHTML = '';
@@ -109,8 +109,10 @@ document.addEventListener('DOMContentLoaded', function () {
             let basketItem = basketItemManager.getBasketItem(itemName)!;
             if (this.checked) {
                 basketItemManager.addToBoughtBasket(basketItem);
+                syncService.syncItemBought(basketItem);
             } else {
                 basketItemManager.addToBuyBasket(basketItem);
+                syncService.syncItemAddedToBuy(basketItem);
             }
         };
     }
