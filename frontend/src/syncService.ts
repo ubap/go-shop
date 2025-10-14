@@ -2,7 +2,6 @@ import {BasketItemManager} from "./basketItemManager";
 import {BasketItem} from "./basketItem";
 
 export class SyncService {
-
     private socket: WebSocket | null = null;
 
     private basketItemManager: BasketItemManager;
@@ -52,6 +51,11 @@ export class SyncService {
     onMessageReceived(message: WebSocketMessage): void {
         // TODO: The next improvement is should be here.
         // around the methods in basketItemManager - rethink it's interface
+        /**
+         * Idea: just one method: update, and set the latest state.
+         * This should be enough. The backend then can deal with conflicts, if any.
+         *
+         */
         switch (message.method) {
             case 'itemAddedToBuy':
                 this.basketItemManager.addNewItem(message.payload.name);

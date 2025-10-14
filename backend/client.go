@@ -20,11 +20,6 @@ type Client struct {
 	dispatcher *MethodDispatcher
 }
 
-type Message struct {
-	Method  string          `json:"method"`
-	Payload json.RawMessage `json:"payload"`
-}
-
 // readPump pumps messages from the websocket connection to the hub.
 func (c *Client) readPump() {
 	defer func() {

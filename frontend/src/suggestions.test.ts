@@ -18,6 +18,7 @@ test('basic suggest, 1 word', () => {
 });
 
 
+
 let mockedTime = new Date().getTime();
 
 function timeTick(): Date {
