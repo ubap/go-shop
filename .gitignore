@@ -34,3 +34,5 @@ go.work.sum
 /data/
 logs.txt
 /target/
+
+/frontend/node_modules
