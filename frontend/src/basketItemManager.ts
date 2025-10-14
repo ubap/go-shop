@@ -1,14 +1,11 @@
 import {BasketItem} from "./basketItem";
 
 export class BasketItemManager {
-    private toBuyBasket: BasketItem[] = [];
-    private boughtBasket: BasketItem[] = [];
-
     private itemNameToBasketItem: Map<string, BasketItem> = new Map();
 
-    private uiElementCreator: (BasketItem: BasketItem) => void;
-    private uiAddToBuyBasket: (BasketItem: BasketItem) => void;
-    private uiAddToBoughtBasket: (BasketItem: BasketItem) => void;
+    private readonly uiElementCreator: (BasketItem: BasketItem) => void;
+    private readonly uiAddToBuyBasket: (BasketItem: BasketItem) => void;
+    private readonly uiAddToBoughtBasket: (BasketItem: BasketItem) => void;
 
     constructor(uiElementCreator: (BasketItem: BasketItem) => void,
                 uiAddToBuyBasket: (BasketItem: BasketItem) => void,
@@ -18,33 +15,44 @@ export class BasketItemManager {
         this.uiAddToBoughtBasket = uiAddToBoughtBasket;
     }
 
-    addNewItem(itemText: string) {
-        let basketItem = this.getBasketItem(itemText);
+    addItemToBuyBasket(itemText: string) {
+        let basketItem = this.getBasketItemByItemName(itemText);
         if (basketItem === undefined) {
             basketItem = this.createBasketItem(itemText)
         }
-        this.addToBuyBasket(basketItem);
-        basketItem.touch();
+
+        if (basketItem.toBuy) {
+            this.uiAddToBuyBasket(basketItem);
+        } else {
+            this.uiAddToBoughtBasket(basketItem);
+        }
     }
 
-    getBasketItem(name: string): BasketItem | undefined {
+    addBasketItemToBuyBasket(basketItem: BasketItem): void {
+        if (this.getBasketItemByItemName(basketItem.name) === undefined) {
+            this.uiElementCreator(basketItem);
+            this.itemNameToBasketItem.set(basketItem.name, basketItem);
+        }
+
+        if (basketItem.toBuy) {
+            this.uiAddToBuyBasket(basketItem);
+        } else {
+            this.uiAddToBoughtBasket(basketItem);
+        }
+    }
+
+    getBasketItemByItemName(name: string): BasketItem | undefined {
         return this.itemNameToBasketItem.get(name);
     }
 
     addToBuyBasket(basketItem: BasketItem): void {
-        this.boughtBasket = this.boughtBasket
-            .filter(bought => bought.name !== basketItem.name);
-        this.toBuyBasket.push(basketItem);
         this.uiAddToBuyBasket(basketItem);
-        basketItem.touch();
+        basketItem.toBuy = true;
     }
 
     addToBoughtBasket(basketItem: BasketItem): void {
-        this.toBuyBasket = this.toBuyBasket
-            .filter(toBuy => toBuy.name !== basketItem.name);
-        this.boughtBasket.push(basketItem);
         this.uiAddToBoughtBasket(basketItem);
-        basketItem.touch();
+        basketItem.toBuy = false;
     }
 
     private createBasketItem(name: string): BasketItem {

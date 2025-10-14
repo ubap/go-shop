@@ -7,8 +7,7 @@ import (
 
 func main() {
 	dispatcher := NewMethodDispatcher()
-	dispatcher.Register("itemAddedToBuy", handleItemAdded)
-	dispatcher.Register("itemBought", handleItemBought)
+	dispatcher.Register("itemUpdate", handleItemUpdate)
 
 	hub := NewHub(dispatcher)
 	go hub.Run()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -84,4 +85,23 @@ func (c *Client) writePump() {
 			return
 		}
 	}
+}
+
+func (c *Client) onConnect() {
+	items := GetAllItems()
+
+	for _, item := range items {
+		marshal, err := json.Marshal(item)
+		if err != nil {
+			fmt.Errorf("Error marshaling item: %v", err)
+		}
+
+		message, err := json.Marshal(Message{"itemUpdate", marshal})
+		if err != nil {
+			fmt.Errorf("Error marshaling message: %v", err)
+		}
+
+		c.send <- message
+	}
+
 }

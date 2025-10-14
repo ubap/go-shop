@@ -15,12 +15,8 @@ export class SyncService {
         return this;
     }
 
-    syncItemAddedToBuy(basketItem: BasketItem) {
-        this.sendMessage("itemAddedToBuy", basketItem);
-    }
-
-    syncItemBought(basketItem: BasketItem) {
-        this.sendMessage("itemBought", basketItem);
+    syncItemUpdate(basketItem: BasketItem) {
+        this.sendMessage("itemUpdate", basketItem);
     }
 
     connect(): void {
@@ -57,11 +53,8 @@ export class SyncService {
          *
          */
         switch (message.method) {
-            case 'itemAddedToBuy':
-                this.basketItemManager.addNewItem(message.payload.name);
-                break;
-            case 'itemBought':
-                this.basketItemManager.addToBoughtBasket(message.payload);
+            case 'itemUpdate':
+                this.basketItemManager.addBasketItemToBuyBasket(message.payload)
                 break;
         }
     }
@@ -80,5 +73,5 @@ export class SyncService {
 
 interface WebSocketMessage {
     method: string;
-    payload: BasketItem; // 'any' is used here for flexibility, but you can define more specific types.
+    payload: BasketItem;
 }

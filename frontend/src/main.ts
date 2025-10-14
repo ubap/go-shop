@@ -55,9 +55,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (itemText === '') {
             return;
         }
-        basketItemManager.addNewItem(itemText);
-        const basketItem = basketItemManager.getBasketItem(itemText)!;
-        syncService.syncItemAddedToBuy(basketItem);
+        basketItemManager.addItemToBuyBasket(itemText);
+        const basketItem = basketItemManager.getBasketItemByItemName(itemText)!;
+        syncService.syncItemUpdate(basketItem);
 
         itemInput.value = '';
         suggestionsContainer.innerHTML = '';
@@ -80,6 +80,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.addEventListener('change', checkBoxClickedListener(li));
+
+        /*checkbox.checked = !basketItem.toBuy;
+        if (!basketItem.toBuy) {
+            li.classList.add('bought');
+        }*/
 
         const textSpan = document.createElement('span');
         textSpan.className = 'item-text';
@@ -106,13 +111,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function checkBoxClickedListener(li: HTMLLIElement) {
         return function (this: HTMLInputElement) {
             let itemName = itemNameFromBasketItemElement(li);
-            let basketItem = basketItemManager.getBasketItem(itemName)!;
+            let basketItem = basketItemManager.getBasketItemByItemName(itemName)!;
             if (this.checked) {
                 basketItemManager.addToBoughtBasket(basketItem);
-                syncService.syncItemBought(basketItem);
+                syncService.syncItemUpdate(basketItem);
             } else {
                 basketItemManager.addToBuyBasket(basketItem);
-                syncService.syncItemAddedToBuy(basketItem);
+                syncService.syncItemUpdate(basketItem);
             }
         };
     }
