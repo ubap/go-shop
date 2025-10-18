@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go-shop/backend/basket"
 	"log"
 	"net/http"
 	"sync"
@@ -25,7 +26,7 @@ type Hub struct {
 	// Mutex to protect access to the clients map
 	mu sync.Mutex
 
-	dispatcher *MethodDispatcher
+	protocol *Protocol
 }
 
 // BroadcastMessage is a wrapper for a message that includes the sender,
@@ -36,13 +37,14 @@ type BroadcastMessage struct {
 }
 
 // NewHub creates a new Hub instance.
-func NewHub(dispatcher *MethodDispatcher) *Hub {
+func NewHub(basket *basket.InMemoryBasket) *Hub {
+	protocol := NewProtocol(basket)
 	return &Hub{
 		broadcast:  make(chan *BroadcastMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
-		dispatcher: dispatcher,
+		protocol:   protocol,
 	}
 }
 
@@ -93,15 +95,15 @@ var upgrader = websocket.Upgrader{
 }
 
 // ServeWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, p *Protocol) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), dispatcher: hub.dispatcher}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
-	client.onConnect()
+	p.onConnect(client)
 
 	go client.writePump()
 	go client.readPump()

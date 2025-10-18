@@ -1,9 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"go-shop/backend/basket"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -18,8 +15,6 @@ type Client struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
-
-	dispatcher *MethodDispatcher
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -36,26 +31,7 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-
-		var msg Message
-		if err := json.Unmarshal(messageBytes, &msg); err != nil {
-			log.Printf("error unmarshaling message: %v", err)
-			continue
-		}
-
-		handler, ok := c.dispatcher.GetHandler(msg.Method)
-		if ok {
-			handler(c, msg.Payload)
-
-			log.Printf("Received valid method '%s', broadcasting...", msg.Method)
-			broadcastMsg := &BroadcastMessage{
-				Sender:  c,
-				Message: messageBytes,
-			}
-			c.hub.broadcast <- broadcastMsg
-		} else {
-			log.Printf("Received unknown method: %s", msg.Method)
-		}
+		c.hub.protocol.handleMsg(c, messageBytes)
 	}
 }
 
@@ -86,36 +62,4 @@ func (c *Client) writePump() {
 			return
 		}
 	}
-}
-
-func (c *Client) onConnect() {
-	items := basket.GetAllItems()
-
-	for _, item := range items {
-		marshal, err := json.Marshal(item)
-		if err != nil {
-			fmt.Errorf("Error marshaling item: %v", err)
-		}
-
-		message, err := json.Marshal(Message{"itemUpdate", marshal})
-		if err != nil {
-			fmt.Errorf("Error marshaling message: %v", err)
-		}
-
-		c.send <- message
-	}
-
-}
-
-func handleItemUpdate(client *Client, payload json.RawMessage) error {
-	log.Printf("Handling 'handleItemUpdate' from client %p with payload: %s", client, string(payload))
-
-	var basketItem basket.Item
-	if err := json.Unmarshal(payload, &basketItem); err != nil {
-		log.Printf("error unmarshaling message: %v", err)
-	}
-
-	basket.UpdateItem(basketItem)
-
-	return nil // Return nil if successful
 }

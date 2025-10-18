@@ -1,22 +1,23 @@
 package main
 
 import (
+	"go-shop/backend/basket"
 	"log"
 	"net/http"
 )
 
 func main() {
-	dispatcher := NewMethodDispatcher()
-	dispatcher.Register("itemUpdate", handleItemUpdate)
-
-	hub := NewHub(dispatcher)
+	memoryBasket := basket.NewInMemoryBasket()
+	hub := NewHub(memoryBasket)
 	go hub.Run()
 
 	fs := http.FileServer(http.Dir("../frontend/dist"))
 	http.Handle("/", fs)
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		ServeWs(hub, w, r)
+		//basketId := r.URL.Query().Get("basket")
+
+		ServeWs(hub, w, r, hub.protocol)
 	})
 
 	log.Println("HTTP server started on :8080")

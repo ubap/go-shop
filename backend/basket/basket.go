@@ -42,19 +42,3 @@ func (i *InMemoryBasket) GetAllItems() []Item {
 	}
 	return basketItemsSlice
 }
-
-// global variable
-var basketItems = make(map[string]Item)
-
-func UpdateItem(basketItem Item) {
-	basketItems[basketItem.ItemID] = basketItem
-}
-
-func GetAllItems() []Item {
-	basketItemsSlice := make([]Item, 0, len(basketItems))
-
-	for _, value := range basketItems {
-		basketItemsSlice = append(basketItemsSlice, value)
-	}
-	return basketItemsSlice
-}
