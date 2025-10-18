@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"go-shop/backend/basket"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -88,7 +89,7 @@ func (c *Client) writePump() {
 }
 
 func (c *Client) onConnect() {
-	items := GetAllItems()
+	items := basket.GetAllItems()
 
 	for _, item := range items {
 		marshal, err := json.Marshal(item)
@@ -104,4 +105,17 @@ func (c *Client) onConnect() {
 		c.send <- message
 	}
 
+}
+
+func handleItemUpdate(client *Client, payload json.RawMessage) error {
+	log.Printf("Handling 'handleItemUpdate' from client %p with payload: %s", client, string(payload))
+
+	var basketItem basket.BasketItem
+	if err := json.Unmarshal(payload, &basketItem); err != nil {
+		log.Printf("error unmarshaling message: %v", err)
+	}
+
+	basket.UpdateItem(basketItem)
+
+	return nil // Return nil if successful
 }
