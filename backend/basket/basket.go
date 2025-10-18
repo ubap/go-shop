@@ -2,40 +2,40 @@ package basket
 
 import "sync"
 
-type BasketItem struct {
+type Item struct {
 	ItemID       string `json:"id"`
 	Name         string `json:"name"`
 	LastModified string `json:"lastModified"`
 }
 
 type Basket interface {
-	UpsertItem(basketItem BasketItem)
-	GetAllItems() []BasketItem
+	UpsertItem(basketItem Item)
+	GetAllItems() []Item
 }
 
 type InMemoryBasket struct {
 	mu          sync.Mutex
-	basketItems map[string]BasketItem
+	basketItems map[string]Item
 }
 
 func NewInMemoryBasket() *InMemoryBasket {
 	return &InMemoryBasket{
-		basketItems: make(map[string]BasketItem),
+		basketItems: make(map[string]Item),
 	}
 }
 
-func (i *InMemoryBasket) UpsertItem(basketItem BasketItem) {
+func (i *InMemoryBasket) UpsertItem(basketItem Item) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
 	i.basketItems[basketItem.ItemID] = basketItem
 }
 
-func (i *InMemoryBasket) GetAllItems() []BasketItem {
+func (i *InMemoryBasket) GetAllItems() []Item {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	basketItemsSlice := make([]BasketItem, 0, len(i.basketItems))
+	basketItemsSlice := make([]Item, 0, len(i.basketItems))
 
 	for _, value := range i.basketItems {
 		basketItemsSlice = append(basketItemsSlice, value)
@@ -44,14 +44,14 @@ func (i *InMemoryBasket) GetAllItems() []BasketItem {
 }
 
 // global variable
-var basketItems = make(map[string]BasketItem)
+var basketItems = make(map[string]Item)
 
-func UpdateItem(basketItem BasketItem) {
+func UpdateItem(basketItem Item) {
 	basketItems[basketItem.ItemID] = basketItem
 }
 
-func GetAllItems() []BasketItem {
-	basketItemsSlice := make([]BasketItem, 0, len(basketItems))
+func GetAllItems() []Item {
+	basketItemsSlice := make([]Item, 0, len(basketItems))
 
 	for _, value := range basketItems {
 		basketItemsSlice = append(basketItemsSlice, value)

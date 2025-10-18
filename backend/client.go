@@ -110,7 +110,7 @@ func (c *Client) onConnect() {
 func handleItemUpdate(client *Client, payload json.RawMessage) error {
 	log.Printf("Handling 'handleItemUpdate' from client %p with payload: %s", client, string(payload))
 
-	var basketItem basket.BasketItem
+	var basketItem basket.Item
 	if err := json.Unmarshal(payload, &basketItem); err != nil {
 		log.Printf("error unmarshaling message: %v", err)
 	}

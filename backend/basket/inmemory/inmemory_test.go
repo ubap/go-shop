@@ -8,7 +8,7 @@ import (
 func Test_AddNewItem(t *testing.T) {
 	sut := basket.NewInMemoryBasket()
 
-	want := basket.BasketItem{ItemID: "itemId", Name: "Water", LastModified: "2023-10-27T10:00:01Z"}
+	want := basket.Item{ItemID: "itemId", Name: "Water", LastModified: "2023-10-27T10:00:01Z"}
 	sut.UpsertItem(want)
 
 	items := sut.GetAllItems()
