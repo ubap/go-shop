@@ -28,7 +28,7 @@ export class BasketItemManager {
         }
     }
 
-    addBasketItemToBuyBasket(basketItem: BasketItem): void {
+    upsertBasketItemFromNetwork(basketItem: BasketItem): void {
         if (this.getBasketItemByItemName(basketItem.name) === undefined) {
             this.uiElementCreator(basketItem);
             this.itemNameToBasketItem.set(basketItem.name, basketItem);

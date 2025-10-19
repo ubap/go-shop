@@ -19,7 +19,7 @@ export class SyncService {
         this.sendMessage("itemUpdate", basketItem);
     }
 
-    connect(): void {
+    private connect(): void {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             console.log("WebSocket is already connected.");
             return;
@@ -44,22 +44,15 @@ export class SyncService {
         };
     }
 
-    onMessageReceived(message: WebSocketMessage): void {
-        // TODO: The next improvement is should be here.
-        // around the methods in basketItemManager - rethink it's interface
-        /**
-         * Idea: just one method: update, and set the latest state.
-         * This should be enough. The backend then can deal with conflicts, if any.
-         *
-         */
+    private onMessageReceived(message: WebSocketMessage): void {
         switch (message.method) {
             case 'itemUpdate':
-                this.basketItemManager.addBasketItemToBuyBasket(message.payload)
+                this.basketItemManager.upsertBasketItemFromNetwork(message.payload)
                 break;
         }
     }
 
-    sendMessage(method: string, payload: any): void {
+    private sendMessage(method: string, payload: BasketItem): void {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             console.error("WebSocket is not connected.");
             return;
