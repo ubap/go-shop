@@ -123,7 +123,70 @@
 </head>
 <body>
 
-<a href="basket.html?id=asfasfsaf">Create new Basket</a>
+<div class="container">
+    <h1>My Shopping List</h1>
+    <div class="input-area">
+        <input type="text" id="item-input" placeholder="Add an item...">
+        <div class="suggestions" id="suggestions"></div>
+        <button id="add-btn">Add</button>
+    </div>
+    <div class="shopping-list">
+        <ul id="list"></ul>
+        <ul id="completed-list"></ul>
+    </div>
+</div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const itemInput = document.getElementById('item-input');
+        const suggestionsContainer = document.getElementById('suggestions');
+
+        // Sample list of suggestions
+        const suggestions = [
+            'Apples', 'Avocado', 'Bananas', 'Bread', 'Butter', 'Carrots', 'Cereal', 'Cheese',
+            'Chicken', 'Coffee', 'Eggs', 'Fish', 'Flour', 'Honey', 'Juice', 'Lettuce',
+            'Milk', 'Onions', 'Pasta', 'Potatoes', 'Rice', 'Salt', 'Sugar', 'Tea', 'Tomatoes', 'Yogurt'
+        ];
+
+
+        // Handle suggestions
+        itemInput.addEventListener('input', function() {
+            const inputText = this.value.toLowerCase();
+            suggestionsContainer.innerHTML = '';
+            if (inputText.length > 0) {
+                const filteredSuggestions = suggestions.filter(s => s.toLowerCase().startsWith(inputText));
+                if (filteredSuggestions.length > 0) {
+                    filteredSuggestions.forEach(suggestion => {
+                        const div = document.createElement('div');
+                        div.textContent = suggestion;
+                        div.className = 'suggestion-item';
+                        div.addEventListener('click', function() {
+                            itemInput.value = this.textContent;
+                            suggestionsContainer.innerHTML = '';
+                            suggestionsContainer.style.display = 'none';
+                            itemInput.focus();
+                        });
+                        suggestionsContainer.appendChild(div);
+                    });
+                    suggestionsContainer.style.display = 'block';
+                } else {
+                    suggestionsContainer.style.display = 'none';
+                }
+            } else {
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.input-area')) {
+                suggestionsContainer.innerHTML = '';
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>

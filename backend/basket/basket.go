@@ -1,11 +1,15 @@
 package basket
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Item struct {
-	ItemID       string `json:"id"`
-	Name         string `json:"name"`
-	LastModified string `json:"lastModified"`
+	ItemID       string    `json:"id"`
+	Name         string    `json:"name"`
+	LastModified time.Time `json:"lastModified"`
+	ToBuy        bool      `json:"toBuy"`
 }
 
 type Basket interface {

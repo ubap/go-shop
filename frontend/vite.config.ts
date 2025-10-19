@@ -1,8 +1,16 @@
-import { defineConfig } from 'vite';
+import {defineConfig} from 'vite';
+import {resolve} from 'path';
 
+// export default is needed for vite config
 export default defineConfig({
     build: {
         outDir: 'dist',
+        rollupOptions: {
+            input: {
+                main: resolve(__dirname, 'index.html'),
+                another: resolve(__dirname, 'basket.html'),
+            },
+        },
     },
     test: {
         globals: true,
