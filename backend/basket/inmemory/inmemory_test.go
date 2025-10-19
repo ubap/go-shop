@@ -3,12 +3,13 @@ package inmemory
 import (
 	"go-shop/backend/basket"
 	"testing"
+	"time"
 )
 
 func Test_AddNewItem(t *testing.T) {
 	sut := basket.NewInMemoryBasket()
 
-	want := basket.Item{ItemID: "itemId", Name: "Water", LastModified: "2023-10-27T10:00:01Z"}
+	want := basket.Item{ItemID: "itemId", Name: "Water", LastModified: time.Now()}
 	sut.UpsertItem(want)
 
 	items := sut.GetAllItems()
