@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-shop/backend/basket"
+	"go-shop/backend/basket/inmemory"
 	"log"
 	"net/http"
 	"sync"
@@ -37,7 +37,7 @@ type BroadcastMessage struct {
 }
 
 // NewHub creates a new Hub instance.
-func NewHub(basket *basket.InMemoryBasket) *Hub {
+func NewHub(basket *inmemory.Basket) *Hub {
 	protocol := NewProtocol(basket)
 	return &Hub{
 		broadcast:  make(chan *BroadcastMessage),

@@ -48,11 +48,13 @@ export class BasketItemManager {
     addToBuyBasket(basketItem: BasketItem): void {
         this.uiAddToBuyBasket(basketItem);
         basketItem.toBuy = true;
+        basketItem.lastModified = new Date();
     }
 
     addToBoughtBasket(basketItem: BasketItem): void {
         this.uiAddToBoughtBasket(basketItem);
         basketItem.toBuy = false;
+        basketItem.lastModified = new Date();
     }
 
     private createBasketItem(name: string): BasketItem {

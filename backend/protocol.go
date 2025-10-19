@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-shop/backend/basket"
+	"go-shop/backend/basket/inmemory"
 	"log"
 )
 
 type Protocol struct {
-	basket   *basket.InMemoryBasket
+	basket   *inmemory.Basket
 	handlers map[string]MethodHandler
 }
 
-func NewProtocol(basket *basket.InMemoryBasket) *Protocol {
+func NewProtocol(basket *inmemory.Basket) *Protocol {
 	p := &Protocol{basket, make(map[string]MethodHandler)}
 	p.handlers["itemUpdate"] = p.onItemUpdate
 	return p

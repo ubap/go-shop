@@ -81,11 +81,6 @@ document.addEventListener('DOMContentLoaded', function () {
         checkbox.type = 'checkbox';
         checkbox.addEventListener('change', checkBoxClickedListener(li));
 
-        /*checkbox.checked = !basketItem.toBuy;
-        if (!basketItem.toBuy) {
-            li.classList.add('bought');
-        }*/
-
         const textSpan = document.createElement('span');
         textSpan.className = 'item-text';
         textSpan.textContent = basketItem.name;
