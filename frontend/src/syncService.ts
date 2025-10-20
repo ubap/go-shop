@@ -60,12 +60,16 @@ export class SyncService {
 
         this.socket.onclose = (event) => {
             console.log("WebSocket connection closed with code:", event.code);
-            setTimeout(() => { this.connect() }, 1000);
+            setTimeout(() => {
+                this.connect()
+            }, 1000);
         };
 
         this.socket.onerror = (error) => {
             console.error("WebSocket error:", error);
-            setTimeout(() => { this.connect() }, 1000);
+            setTimeout(() => {
+                this.connect()
+            }, 1000);
         };
 
     }
@@ -73,7 +77,9 @@ export class SyncService {
     private onMessageReceived(message: WebSocketMessage): void {
         switch (message.method) {
             case 'itemUpdate':
-                this.basketItemManager.upsertBasketItemFromNetwork(message.payload);
+                for (const item of message.payload) {
+                    this.basketItemManager.upsertBasketItemFromNetwork(item);
+                }
                 break;
             case 'ack':
                 // TODO: Handle ACK in separate method
@@ -86,14 +92,16 @@ export class SyncService {
         }
     }
 
-    private sendMessage(method: string, payload: BasketItem): void {
+    private sendMessage(method: string, basketItem: BasketItem): void {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             console.error("WebSocket is not connected.");
             return;
         }
 
         const messageId = crypto.randomUUID();
-        const message: WebSocketMessage = {messageId, method, payload};
+        const message: WebSocketMessage = {
+            messageId: messageId, method: method, payload: [basketItem]
+        };
 
         const timeoutId = setTimeout(() => {
             console.error(`ACK not received for message ${messageId}. Assuming connection is lost.`);
@@ -109,5 +117,5 @@ export class SyncService {
 interface WebSocketMessage {
     messageId: string;
     method: string;
-    payload: BasketItem;
+    payload: BasketItem[];
 }

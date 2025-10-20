@@ -24,32 +24,31 @@ func NewProtocol(basket *inmemory.Basket) *Protocol {
 func (p *Protocol) onConnect(c *Client) {
 	items := (*p.basket).GetAllItems()
 
-	for _, item := range items {
-		marshal, err := json.Marshal(item)
-		if err != nil {
-			fmt.Errorf("error marshaling item: %v", err)
-		}
-
-		message, err := json.Marshal(Message{
-			MessageId: uuid.New().String(), Method: "itemUpdate", Payload: marshal})
-		if err != nil {
-			fmt.Errorf("error marshaling message: %v", err)
-		}
-
-		c.send <- message
+	marshalledItems, err := json.Marshal(items)
+	if err != nil {
+		fmt.Errorf("error marshaling item: %v", err)
 	}
 
+	message, err := json.Marshal(Message{
+		MessageId: uuid.New().String(), Method: "itemUpdate", Payload: marshalledItems})
+	if err != nil {
+		fmt.Errorf("error marshaling message: %v", err)
+	}
+
+	c.send <- message
 }
 
 func (p *Protocol) onItemUpdate(client *Client, payload json.RawMessage) error {
 	log.Printf("Handling 'onItemUpdate' from client %p with payload: %s", client, string(payload))
 
-	var basketItem basket.Item
-	if err := json.Unmarshal(payload, &basketItem); err != nil {
+	var basketItems []basket.Item
+	if err := json.Unmarshal(payload, &basketItems); err != nil {
 		log.Printf("error unmarshaling message: %v", err)
 	}
 
-	(*p.basket).UpsertItem(basketItem)
+	for _, item := range basketItems {
+		(*p.basket).UpsertItem(item)
+	}
 
 	return nil // Return nil if successful
 }
