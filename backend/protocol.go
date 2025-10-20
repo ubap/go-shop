@@ -6,6 +6,8 @@ import (
 	"go-shop/backend/basket"
 	"go-shop/backend/basket/inmemory"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 type Protocol struct {
@@ -25,12 +27,13 @@ func (p *Protocol) onConnect(c *Client) {
 	for _, item := range items {
 		marshal, err := json.Marshal(item)
 		if err != nil {
-			fmt.Errorf("Error marshaling item: %v", err)
+			fmt.Errorf("error marshaling item: %v", err)
 		}
 
-		message, err := json.Marshal(Message{"itemUpdate", marshal})
+		message, err := json.Marshal(Message{
+			MessageId: uuid.New().String(), Method: "itemUpdate", Payload: marshal})
 		if err != nil {
-			fmt.Errorf("Error marshaling message: %v", err)
+			fmt.Errorf("error marshaling message: %v", err)
 		}
 
 		c.send <- message
@@ -65,6 +68,15 @@ func (p *Protocol) handleMsg(client *Client, messageBytes []byte) {
 			return
 		}
 
+		marshal, err := json.Marshal(Message{MessageId: msg.MessageId, Method: "ack"})
+		if err != nil {
+			log.Printf("error marshalling ack: %v", err)
+			return
+		}
+		client.send <- marshal
+
+		// TODO move broadcast to specific method handler,
+		// it depends on the method whether we want to handle it
 		log.Printf("Received valid method '%s', broadcasting...", msg.Method)
 		broadcastMsg := &BroadcastMessage{
 			Sender:  client,
