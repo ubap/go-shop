@@ -1,5 +1,6 @@
 import {BasketItemManager} from "./basketItemManager";
 import {BasketItem} from "./basketItem";
+import {generateUUID} from "./uuid";
 
 export class SyncService {
     private socket: WebSocket | null = null;
@@ -28,7 +29,7 @@ export class SyncService {
     }
 
     syncItemUpdate(basketItem: BasketItem) {
-        this.sendMessage("itemUpdate", basketItem);
+        this.sendMessage("itemUpdate", [basketItem]);
     }
 
     private connect(): void {
@@ -45,6 +46,16 @@ export class SyncService {
             // TODO: remote has to send all items only after receiving the collection of
             //  unsynced items, the collection can be empty, but the remote waits for the
             //  collection. The remote has to 'ack' it.
+
+            // since ES2015 the values will be returned in the order they were inserted FIFO
+            this.unacknowledgedMessages.values().forEach(message => {
+                clearTimeout(message.timeoutId);
+            });
+            const messages = this.unacknowledgedMessages
+                .values()
+                .map(message => message.message)
+                .toArray()
+            this.sendMessage("unackedMessages", messages);
         };
 
         // Event handler for receiving messages from the server.
@@ -78,7 +89,7 @@ export class SyncService {
         switch (message.method) {
             case 'itemUpdate':
                 for (const item of message.payload) {
-                    this.basketItemManager.upsertBasketItemFromNetwork(item);
+                    this.basketItemManager.upsertBasketItemFromNetwork(item as BasketItem);
                 }
                 break;
             case 'ack':
@@ -92,15 +103,16 @@ export class SyncService {
         }
     }
 
-    private sendMessage(method: string, basketItem: BasketItem): void {
+    private sendMessage(method: string, payload: PayloadType): void {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             console.error("WebSocket is not connected.");
+            // TODO add to unacked messages without timeout..
             return;
         }
 
-        const messageId = crypto.randomUUID();
+        const messageId = generateUUID();
         const message: WebSocketMessage = {
-            messageId: messageId, method: method, payload: [basketItem]
+            messageId: messageId, method: method, payload: payload
         };
 
         const timeoutId = setTimeout(() => {
@@ -117,5 +129,7 @@ export class SyncService {
 interface WebSocketMessage {
     messageId: string;
     method: string;
-    payload: BasketItem[];
+    payload: PayloadType;
 }
+
+type PayloadType = BasketItem[] | WebSocketMessage[];
