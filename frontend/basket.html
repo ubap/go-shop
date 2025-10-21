@@ -119,9 +119,42 @@
             text-decoration: line-through;
             color: #999;
         }
+
+        #connection-overlay {
+            position: fixed; /* Cover the entire viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1000; /* Ensure it's on top of everything else */
+            transition: opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        #connection-overlay.hidden {
+            opacity: 0;
+            pointer-events: none; /* Allow clicks to go through when hidden */
+        }
+
+        .overlay-content {
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
+
+<div id="connection-overlay">
+    <div class="overlay-content">
+        <h2 id="overlay-title">Connecting...</h2>
+        <p id="overlay-text">Please wait while we connect to the server.</p>
+    </div>
+</div>
 
 <div class="container">
     <h1>My Shopping List</h1>

@@ -1,6 +1,6 @@
 import {BasketItem} from "./basketItem";
 import {BasketItemManager} from "./basketItemManager";
-import {SyncService} from "./syncService";
+import {ConnectionStatus, SyncService} from "./syncService";
 
 
 /**
@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const completedList = document.querySelector<HTMLUListElement>('#completed-list')!;
     const suggestionsContainer = document.querySelector<HTMLDivElement>('#suggestions')!;
 
+    const overlay = document.getElementById('connection-overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const overlayText = document.getElementById('overlay-text');
+    handleStatusChange(ConnectionStatus.CONNECTING);
+
     const basketItemElementsByText: Map<string, HTMLLIElement> = new Map();
 
     const basketItemManager = new BasketItemManager(createBasketItemElement,
@@ -48,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     );
 
-    const syncService = new SyncService(basketItemManager).start();
+    const syncService = new SyncService(basketItemManager, handleStatusChange).start();
 
     const addItemFromUI = () => {
         const itemText = itemInput.value.trim();
@@ -115,6 +120,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 syncService.syncItemUpdate(basketItem);
             }
         };
+    }
+
+    function handleStatusChange(status: ConnectionStatus) {
+        if (!overlay || !overlayTitle || !overlayText) return;
+
+        switch (status) {
+            case ConnectionStatus.OPEN:
+                // Connection is good, hide the overlay
+                overlay.classList.add('hidden');
+                break;
+
+            case ConnectionStatus.CONNECTING:
+                overlayTitle.textContent = 'Connecting...';
+                overlayText.textContent = 'Attempting to establish a connection.';
+                overlay.classList.remove('hidden');
+                break;
+
+            case ConnectionStatus.RECONNECTING:
+                overlayTitle.textContent = 'Connection Lost';
+                overlayText.textContent = 'Reconnecting... Please wait.';
+                overlay.classList.remove('hidden');
+                break;
+
+            case ConnectionStatus.OFFLINE:
+                overlayTitle.textContent = 'You are Offline';
+                overlayText.textContent = 'Please check your internet connection.';
+                overlay.classList.remove('hidden');
+                break;
+        }
     }
 });
 

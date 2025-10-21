@@ -2,14 +2,24 @@ import {BasketItemManager} from "./basketItemManager";
 import {BasketItem} from "./basketItem";
 import {generateUUID} from "./uuid";
 
+export enum ConnectionStatus {
+    CONNECTING = 'connecting',
+    OPEN = 'open',
+    RECONNECTING = 'reconnecting',
+    OFFLINE = 'offline',
+}
+
 export class SyncService {
     private socket: WebSocket | null = null;
     private unacknowledgedMessages: Map<string, { message: WebSocketMessage, timeoutId: any | null }> = new Map();
 
     private basketItemManager: BasketItemManager;
 
-    constructor(basketItemManager: BasketItemManager) {
+    private onStatusChange: (status: ConnectionStatus) => void;
+
+    constructor(basketItemManager: BasketItemManager, onStatusChange: (status: ConnectionStatus) => void) {
         this.basketItemManager = basketItemManager;
+        this.onStatusChange = onStatusChange;
     }
 
     start(): SyncService {
@@ -22,9 +32,11 @@ export class SyncService {
     private handleConnectionChange = (): void => {
         if (navigator.onLine) {
             console.log("Internet connection restored. Attempting to reconnect immediately.");
+            this.onStatusChange(ConnectionStatus.RECONNECTING);
             this.connect();
         } else {
             console.log("Internet connection lost.");
+            this.onStatusChange(ConnectionStatus.OFFLINE);
         }
     }
 
@@ -35,19 +47,21 @@ export class SyncService {
     private connect(): void {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             console.log("WebSocket is already connected.");
+            this.onStatusChange(ConnectionStatus.OPEN);
             return;
         }
-
+        this.onStatusChange(ConnectionStatus.CONNECTING);
         this.socket = new WebSocket("/ws");
 
         this.socket.onopen = () => {
             console.log("WebSocket connection established.");
+            this.onStatusChange(ConnectionStatus.OPEN);
             // Todo: send queue of unsynced items
             // TODO: remote has to send all items only after receiving the collection of
             //  unsynced items, the collection can be empty, but the remote waits for the
             //  collection. The remote has to 'ack' it.
 
-            // since ES2015 the values will be returned in the order they were inserted FIFO
+            // since ES2015 the values will be returned in the order they were inserted (FIFO)
             this.unacknowledgedMessages.values().forEach(message => {
                 clearTimeout(message.timeoutId);
             });
@@ -71,6 +85,7 @@ export class SyncService {
 
         this.socket.onclose = (event) => {
             console.log("WebSocket connection closed with code:", event.code);
+            this.onStatusChange(ConnectionStatus.RECONNECTING);
             setTimeout(() => {
                 this.connect()
             }, 1000);
@@ -78,9 +93,6 @@ export class SyncService {
 
         this.socket.onerror = (error) => {
             console.error("WebSocket error:", error);
-            setTimeout(() => {
-                this.connect()
-            }, 1000);
         };
 
     }
