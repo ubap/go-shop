@@ -18,24 +18,12 @@ type Protocol struct {
 func NewProtocol(basket *inmemory.Basket) *Protocol {
 	p := &Protocol{basket, make(map[string]MethodHandler)}
 	p.handlers["itemUpdate"] = p.onItemUpdate
+	p.handlers["unackedMessages"] = p.onUnackedMessages
 	return p
 }
 
 func (p *Protocol) onConnect(c *Client) {
-	items := (*p.basket).GetAllItems()
 
-	marshalledItems, err := json.Marshal(items)
-	if err != nil {
-		fmt.Errorf("error marshaling item: %v", err)
-	}
-
-	message, err := json.Marshal(Message{
-		MessageId: uuid.New().String(), Method: "itemUpdate", Payload: marshalledItems})
-	if err != nil {
-		fmt.Errorf("error marshaling message: %v", err)
-	}
-
-	c.send <- message
 }
 
 func (p *Protocol) onItemUpdate(client *Client, payload json.RawMessage) error {
@@ -51,6 +39,42 @@ func (p *Protocol) onItemUpdate(client *Client, payload json.RawMessage) error {
 	}
 
 	return nil // Return nil if successful
+}
+
+func (p *Protocol) onUnackedMessages(client *Client, payload json.RawMessage) error {
+	log.Printf("Handling 'onUnackedMessages' from client %p with payload: %s", client, string(payload))
+
+	// HANDLE UNACKED MESSAGES, IF ANY
+	var messages []Message
+	if err := json.Unmarshal(payload, &messages); err != nil {
+		log.Printf("error unmarshaling message: %v", err)
+	}
+
+	for _, message := range messages {
+		err := (*p).onItemUpdate(client, message.Payload)
+		if err != nil {
+			log.Printf("error handling message: %v", err)
+			return err
+		}
+	}
+
+	// SEND ALL ITEMS ON REPLY TO UNACKED MESSAGES
+	items := (*p.basket).GetAllItems()
+
+	marshalledItems, err := json.Marshal(items)
+	if err != nil {
+		fmt.Errorf("error marshaling item: %v", err)
+	}
+
+	message, err := json.Marshal(Message{
+		MessageId: uuid.New().String(), Method: "itemUpdate", Payload: marshalledItems})
+	if err != nil {
+		fmt.Errorf("error marshaling message: %v", err)
+	}
+
+	client.send <- message
+
+	return nil
 }
 
 func (p *Protocol) handleMsg(client *Client, messageBytes []byte) {
