@@ -51,7 +51,9 @@ export class SyncService {
             return;
         }
         this.onStatusChange(ConnectionStatus.CONNECTING);
-        this.socket = new WebSocket("/ws");
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id')
+        this.socket = new WebSocket("/ws?id=" + id);
 
         this.socket.onopen = () => {
             console.log("WebSocket connection established.");

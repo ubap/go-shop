@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go-shop/backend/basket/inmemory"
 	"log"
 	"net/http"
@@ -15,7 +16,8 @@ func main() {
 	http.Handle("/", fs)
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		//basketId := r.URL.Query().Get("id")
+		basketId := r.URL.Query().Get("id")
+		fmt.Println(basketId)
 
 		ServeWs(hub, w, r, hub.protocol)
 	})
