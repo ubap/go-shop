@@ -2,29 +2,83 @@ package main
 
 import (
 	"fmt"
-	"go-shop/backend/basket/inmemory"
-	"log"
 	"net/http"
+	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true }, // Allow Svelte to connect
+}
+
+type Message struct {
+	Type  string   `json:"type"`  // "update"
+	Items []string `json:"items"` // The full list
+}
+
+type BasketRoom struct {
+	clients map[*websocket.Conn]bool
+	items   []string
+	mu      sync.Mutex
+}
+
+var rooms = make(map[string]*BasketRoom)
+var roomsMu sync.Mutex
+
 func main() {
-	memoryBasket := inmemory.NewBasket()
-	hub := NewHub(memoryBasket)
-	go hub.Run()
+	// 2. WebSocket endpoint
+	http.HandleFunc("/ws", handleWebSocket)
 
-	fs := http.FileServer(http.Dir("../frontend/dist"))
-	http.Handle("/", fs)
+	fmt.Println("Backend running on :8080")
+	http.ListenAndServe(":8080", nil)
+}
 
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		basketId := r.URL.Query().Get("id")
-		fmt.Println(basketId)
+func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	basketID := r.URL.Query().Get("id")
+	if basketID == "" {
+		return
+	}
 
-		ServeWs(hub, w, r, hub.protocol)
-	})
+	conn, _ := upgrader.Upgrade(w, r, nil)
+	defer conn.Close()
 
-	log.Println("HTTP server started on :8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+	// LOCK the rooms map to check/create safely
+	roomsMu.Lock()
+	room, exists := rooms[basketID]
+	if !exists {
+		// Lazy Initialization: Create the basket because someone arrived
+		room = &BasketRoom{
+			clients: make(map[*websocket.Conn]bool),
+			items:   []string{},
+		}
+		rooms[basketID] = room
+		fmt.Printf("Created new basket: %s\n", basketID)
+	}
+	roomsMu.Unlock()
+
+	// Register the user to the room
+	room.mu.Lock()
+	room.clients[conn] = true
+	// Send existing items (will be empty list if new)
+	conn.WriteJSON(Message{Type: "update", Items: room.items})
+	room.mu.Unlock()
+
+	// Listen for updates...
+	for {
+		var msg Message
+		if err := conn.ReadJSON(&msg); err != nil {
+			room.mu.Lock()
+			delete(room.clients, conn) // Clean up on disconnect
+			room.mu.Unlock()
+			break
+		}
+
+		room.mu.Lock()
+		room.items = msg.Items
+		for client := range room.clients {
+			client.WriteJSON(msg)
+		}
+		room.mu.Unlock()
 	}
 }
