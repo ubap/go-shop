@@ -1,29 +1,41 @@
-import {defineConfig} from 'vite';
-import {resolve} from 'path';
+import { defineConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
+import { sveltekit } from '@sveltejs/kit/vite';
 
-// export default is needed for vite config
 export default defineConfig({
-    build: {
-        outDir: 'dist',
-        rollupOptions: {
-            input: {
-                main: resolve(__dirname, 'index.html'),
-                another: resolve(__dirname, 'basket.html'),
-            },
-        },
-    },
-    test: {
-        globals: true,
-    },
-    server: {
-        proxy: {
-            // string shorthand: http://localhost:5173/api -> http://localhost:8080/api
-            '/ws': {
-                target: 'http://localhost:8080', // Your Go backend server
-                changeOrigin: true, // Needed for virtual hosted sites
-                secure: false,      // Can be false if you're not using HTTPS
-                ws: true,           // If you want to proxy websockets
-            }
-        }
-    },
+	plugins: [sveltekit()],
+
+	test: {
+		expect: { requireAssertions: true },
+
+		projects: [
+			{
+				extends: './vite.config.ts',
+
+				test: {
+					name: 'client',
+
+					browser: {
+						enabled: true,
+						provider: playwright(),
+						instances: [{ browser: 'chromium', headless: true }]
+					},
+
+					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+					exclude: ['src/lib/server/**']
+				}
+			},
+
+			{
+				extends: './vite.config.ts',
+
+				test: {
+					name: 'server',
+					environment: 'node',
+					include: ['src/**/*.{test,spec}.{js,ts}'],
+					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+				}
+			}
+		]
+	}
 });
