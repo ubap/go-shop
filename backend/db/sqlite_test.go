@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_GetAllItems(t *testing.T) {
+func Test_Store(t *testing.T) {
 	store, err := NewStore(":memory:")
 	require.NoError(t, err)
 
@@ -14,6 +14,9 @@ func Test_GetAllItems(t *testing.T) {
 	require.NoError(t, err)
 
 	itemId2, err := store.AddItem("Test Item 2")
+	require.NoError(t, err)
+
+	err = store.ToggleItem(itemId2, true)
 	require.NoError(t, err)
 
 	items, err := store.GetAllItems()
@@ -27,7 +30,7 @@ func Test_GetAllItems(t *testing.T) {
 		{
 			ID:        itemId2,
 			Title:     "Test Item 2",
-			Completed: false,
+			Completed: true,
 		},
 	}, items)
 }
