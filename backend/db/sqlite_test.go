@@ -6,31 +6,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_Store(t *testing.T) {
+func Test_CreateBasketIfNotExists(t *testing.T) {
 	store, err := NewStore(":memory:")
 	require.NoError(t, err)
 
-	itemId, err := store.AddItem("Test Item")
+	created, err := store.CreateBasketIfNotExists("test-basket")
 	require.NoError(t, err)
+	require.True(t, created)
+	basket, err := store.GetBasket("test-basket")
+	require.NoError(t, err)
+	require.Equal(t, "test-basket", basket.Key)
 
-	itemId2, err := store.AddItem("Test Item 2")
+	created, err = store.CreateBasketIfNotExists("test-basket")
 	require.NoError(t, err)
-
-	err = store.ToggleItem(itemId2, true)
-	require.NoError(t, err)
-
-	items, err := store.GetAllItems()
-	require.NoError(t, err)
-	require.ElementsMatch(t, []Item{
-		{
-			ID:        itemId,
-			Title:     "Test Item",
-			Completed: false,
-		},
-		{
-			ID:        itemId2,
-			Title:     "Test Item 2",
-			Completed: true,
-		},
-	}, items)
+	require.False(t, created)
 }

@@ -4,6 +4,7 @@ go 1.25.1
 
 require (
 	github.com/gorilla/websocket v1.5.3
+	github.com/jmoiron/sqlx v1.4.0
 	github.com/stretchr/testify v1.11.1
 	modernc.org/sqlite v1.39.1
 )
