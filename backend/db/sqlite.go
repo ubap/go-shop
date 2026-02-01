@@ -11,9 +11,9 @@ import (
 )
 
 type Basket struct {
-	ID       int64     `db:"id"`
-	Key      string    `db:"key"`
-	CreatdAt time.Time `db:"created_at"`
+	ID        int64     `db:"id"`
+	Key       string    `db:"key"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type Item struct {
