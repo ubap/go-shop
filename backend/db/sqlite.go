@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -29,40 +30,71 @@ type Store struct {
 func (s *Store) Close() error {
 	return s.conn.Close()
 }
-func (s *Store) AddItem(title string) (int64, error) {
-	res, err := s.conn.Exec("INSERT INTO shopping_items (title) VALUES (?)", title)
+
+// AddItemToBasket links an item (by title) to a specific basket (by key).
+// Creates the item if it doesn't exist, and
+// ensures the item is linked to the basket exactly once.
+func (s *Store) AddItemToBasket(basketKey string, title string) error {
+	tx, err := s.conn.BeginTxx(context.Background(), nil)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return res.LastInsertId()
+	defer tx.Rollback()
+
+	basketID, err := s.ensureBasket(tx, basketKey)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("INSERT OR IGNORE INTO items (title) VALUES (?)", title)
+	if err != nil {
+		return err
+	}
+
+	var itemID int64
+	err = tx.Get(&itemID, "SELECT id FROM items WHERE title = ?", title)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("INSERT OR IGNORE INTO basket_items (basket_id, item_id) VALUES (?, ?)", basketID, itemID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
-func (s *Store) GetAllItems() ([]Item, error) {
-	rows, err := s.conn.Query("SELECT id, title, completed FROM shopping_items ORDER BY id DESC")
+// ensureBasket handles the JIT creation and returns the internal ID.
+func (s *Store) ensureBasket(tx *sqlx.Tx, key string) (int64, error) {
+	_, err := tx.Exec("INSERT OR IGNORE INTO baskets (key) VALUES (?)", key)
 	if err != nil {
-		return nil, err
+		return 0, fmt.Errorf("auto-create basket: %w", err)
 	}
-	defer rows.Close()
 
+	var id int64
+	err = tx.Get(&id, "SELECT id FROM baskets WHERE key = ?", key)
+	if err != nil {
+		return 0, fmt.Errorf("lookup basket id: %w", err)
+	}
+
+	return id, nil
+}
+
+func (s *Store) GetItemsForBasket(basketKey string) ([]Item, error) {
 	var items []Item
-	for rows.Next() {
-		var i Item
-		if err := rows.Scan(&i.ID, &i.Title, &i.Completed); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
+	query := `
+	SELECT i.id, i.title, i.completed
+	FROM items i
+	JOIN basket_items bi ON i.id = bi.item_id
+	JOIN baskets b ON bi.basket_id = b.id
+	WHERE b.key = ?;
+	`
+	err := s.conn.Select(&items, query, basketKey)
+	if err != nil {
+		return nil, fmt.Errorf("get items for basket: %w", err)
 	}
 	return items, nil
-}
-
-func (s *Store) ToggleItem(id int64, completed bool) error {
-	_, err := s.conn.Exec("UPDATE shopping_items SET completed = ? WHERE id = ?", completed, id)
-	return err
-}
-
-func (s *Store) DeleteItem(id int64) error {
-	_, err := s.conn.Exec("DELETE FROM shopping_items WHERE id = ?", id)
-	return err
 }
 
 // CreateBasketIfNotExists ensures a basket with the given key exists in the database.
