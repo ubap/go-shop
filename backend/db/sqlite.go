@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite" // Import the driver
 )
@@ -31,9 +32,11 @@ func (s *Store) Close() error {
 
 // AddItemToBasket links an item (by title) to a specific basket (by key).
 func (s *Store) AddItemToBasket(basketKey string, title string) (int64, error) {
-	err := s.validateItemTitle(title)
-	if err != nil {
-		return 0, err
+	if !s.validateItemTitle(title) {
+		return 0, fmt.Errorf("invalid item title")
+	}
+	if !s.validateBasketKey(basketKey) {
+		return 0, fmt.Errorf("invalid basket key")
 	}
 
 	tx, err := s.conn.BeginTxx(context.Background(), nil)
@@ -68,19 +71,32 @@ func (s *Store) AddItemToBasket(basketKey string, title string) (int64, error) {
 	return id, nil
 }
 
-func (s *Store) validateItemTitle(title string) error {
+func (s *Store) validateItemTitle(title string) bool {
 	if len(title) == 0 {
-		return fmt.Errorf("title cannot be empty")
+		return false
 	}
 	if len(title) > 255 {
-		return fmt.Errorf("title cannot exceed 255 characters")
+		return false
 	}
-	return nil
+	return true
+}
+
+func (s *Store) validateBasketKey(key string) bool {
+	parsed, err := uuid.Parse(key)
+	if err != nil {
+		return false
+	}
+	// Specifically check that it is UUID v4
+	return parsed.Version() == 4
 }
 
 // SetItemCompletion updates an item but ONLY if it belongs to the specified basket.
 // This ensures that knowing an item ID isn't enough to modify someone else's list.
 func (s *Store) SetItemCompletion(basketKey string, id int64, completed bool) error {
+	if !s.validateBasketKey(basketKey) {
+		return fmt.Errorf("invalid basket key")
+	}
+
 	query := `
 		UPDATE basket_items 
 		SET completed = ?
@@ -103,7 +119,9 @@ func (s *Store) SetItemCompletion(basketKey string, id int64, completed bool) er
 }
 
 func (s *Store) GetItemsForBasket(basketKey string) ([]Item, error) {
-	// TODO: Input validation
+	if !s.validateBasketKey(basketKey) {
+		return nil, fmt.Errorf("invalid basket key")
+	}
 	// Initialize an empty slice so we return [] instead of null in JSON
 	var items []Item
 
