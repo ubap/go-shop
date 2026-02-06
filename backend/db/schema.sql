@@ -4,26 +4,38 @@ CREATE TABLE IF NOT EXISTS baskets
 (
     -- The public identifier (e.g., 'weekly-grocery').
     -- We make this the PRIMARY KEY so we can link other tables to it.
-    key TEXT PRIMARY KEY NOT NULL,
+    key        TEXT PRIMARY KEY NOT NULL,
 
     -- The UTC timestamp of when the basket was first created.
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) WITHOUT ROWID;
 
-CREATE TABLE IF NOT EXISTS basket_items (
-                                              id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                              basket_key TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS basket_items
+(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    basket_key TEXT NOT NULL,
     -- The name of the item (e.g., 'Milk').
     -- COLLATE NOCASE ensures that 'Milk' and 'milk' are treated as the same.
-                                              title TEXT NOT NULL,
+    title      TEXT NOT NULL,
 
     -- The 'checked' state of the item. 0 = pending, 1 = completed.
-                                              completed BOOLEAN DEFAULT 0,
+    completed  BOOLEAN  DEFAULT 0,
+
+    touched_at DATETIME DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now')),
 
     -- Constraints:
     -- 1. If the parent basket is deleted, remove all its items.
-                                              FOREIGN KEY (basket_key) REFERENCES baskets(key) ON DELETE CASCADE,
+    FOREIGN KEY (basket_key) REFERENCES baskets (key) ON DELETE CASCADE,
 
     -- 2. Prevent the same item name from being added twice to the SAME basket.
-                                              UNIQUE(basket_key, title COLLATE NOCASE)
+    UNIQUE (basket_key, title COLLATE NOCASE)
 );
+
+CREATE TRIGGER IF NOT EXISTS update_item_touched_at
+    AFTER UPDATE
+    ON basket_items
+BEGIN
+    UPDATE basket_items
+    SET touched_at = strftime('%Y-%m-%d %H:%M:%f', 'now')
+    WHERE id = NEW.id;
+END;
