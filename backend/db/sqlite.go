@@ -31,7 +31,11 @@ func (s *Store) Close() error {
 
 // AddItemToBasket links an item (by title) to a specific basket (by key).
 func (s *Store) AddItemToBasket(basketKey string, title string) (int64, error) {
-	// TODO: Input validation
+	err := s.validateItemTitle(title)
+	if err != nil {
+		return 0, err
+	}
+
 	tx, err := s.conn.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return 0, err
@@ -62,6 +66,16 @@ func (s *Store) AddItemToBasket(basketKey string, title string) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func (s *Store) validateItemTitle(title string) error {
+	if len(title) == 0 {
+		return fmt.Errorf("title cannot be empty")
+	}
+	if len(title) > 255 {
+		return fmt.Errorf("title cannot exceed 255 characters")
+	}
+	return nil
 }
 
 // SetItemCompletion updates an item but ONLY if it belongs to the specified basket.

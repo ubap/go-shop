@@ -1,6 +1,7 @@
 package db
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -91,6 +92,15 @@ func Test_ValidateInput(t *testing.T) {
 		store := setup(t)
 
 		_, err := store.Store.AddItemToBasket(basketKey, "")
+		require.Error(t, err)
+	})
+
+	t.Run("Too long item title fails", func(t *testing.T) {
+		store := setup(t)
+
+		longTitle := strings.Repeat("a", 256)
+
+		_, err := store.Store.AddItemToBasket(basketKey, longTitle)
 		require.Error(t, err)
 	})
 }
