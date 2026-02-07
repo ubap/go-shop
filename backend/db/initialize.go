@@ -10,7 +10,7 @@ import (
 //go:embed schema.sql
 var schemaSQL string
 
-func NewStore(dbPath string) (*Store, error) {
+func NewSqliteStore(dbPath string) (*SqliteStore, error) {
 	db, err := sqlx.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
@@ -28,5 +28,5 @@ func NewStore(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("failed to initialize schema: %w", err)
 	}
 
-	return &Store{conn: db}, nil
+	return &SqliteStore{conn: db}, nil
 }

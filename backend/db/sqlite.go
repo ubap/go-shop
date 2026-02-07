@@ -22,16 +22,27 @@ type Item struct {
 	Completed bool   `db:"completed" json:"completed"`
 }
 
-type Store struct {
+type Store interface {
+	// AddItemToBasket links an item (by title) to a specific basket (by key).
+	AddItemToBasket(basketKey string, title string) (int64, error)
+	// SetItemCompletion updates an item but ONLY if it belongs to the specified basket.
+	// This ensures that knowing an item ID isn't enough to modify someone else's list.
+	SetItemCompletion(basketKey string, id int64, completed bool) error
+	// GetItemsForBasket retrieves all items for a given basket, sorted by completion status and recency.
+	GetItemsForBasket(basketKey string) ([]Item, error)
+
+	Close() error
+}
+
+type SqliteStore struct {
 	conn *sqlx.DB
 }
 
-func (s *Store) Close() error {
+func (s *SqliteStore) Close() error {
 	return s.conn.Close()
 }
 
-// AddItemToBasket links an item (by title) to a specific basket (by key).
-func (s *Store) AddItemToBasket(basketKey string, title string) (int64, error) {
+func (s *SqliteStore) AddItemToBasket(basketKey string, title string) (int64, error) {
 	if !s.validateItemTitle(title) {
 		return 0, fmt.Errorf("invalid item title")
 	}
@@ -71,28 +82,9 @@ func (s *Store) AddItemToBasket(basketKey string, title string) (int64, error) {
 	return id, nil
 }
 
-func (s *Store) validateItemTitle(title string) bool {
-	if len(title) == 0 {
-		return false
-	}
-	if len(title) > 255 {
-		return false
-	}
-	return true
-}
-
-func (s *Store) validateBasketKey(key string) bool {
-	parsed, err := uuid.Parse(key)
-	if err != nil {
-		return false
-	}
-	// Specifically check that it is UUID v4
-	return parsed.Version() == 4
-}
-
 // SetItemCompletion updates an item but ONLY if it belongs to the specified basket.
 // This ensures that knowing an item ID isn't enough to modify someone else's list.
-func (s *Store) SetItemCompletion(basketKey string, id int64, completed bool) error {
+func (s *SqliteStore) SetItemCompletion(basketKey string, id int64, completed bool) error {
 	if !s.validateBasketKey(basketKey) {
 		return fmt.Errorf("invalid basket key")
 	}
@@ -118,7 +110,7 @@ func (s *Store) SetItemCompletion(basketKey string, id int64, completed bool) er
 	return nil
 }
 
-func (s *Store) GetItemsForBasket(basketKey string) ([]Item, error) {
+func (s *SqliteStore) GetItemsForBasket(basketKey string) ([]Item, error) {
 	if !s.validateBasketKey(basketKey) {
 		return nil, fmt.Errorf("invalid basket key")
 	}
@@ -137,4 +129,23 @@ func (s *Store) GetItemsForBasket(basketKey string) ([]Item, error) {
 	}
 
 	return items, nil
+}
+
+func (s *SqliteStore) validateItemTitle(title string) bool {
+	if len(title) == 0 {
+		return false
+	}
+	if len(title) > 255 {
+		return false
+	}
+	return true
+}
+
+func (s *SqliteStore) validateBasketKey(key string) bool {
+	parsed, err := uuid.Parse(key)
+	if err != nil {
+		return false
+	}
+	// Specifically check that it is UUID v4
+	return parsed.Version() == 4
 }

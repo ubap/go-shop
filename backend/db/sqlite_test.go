@@ -10,27 +10,35 @@ import (
 
 // region Setup
 type TestStore struct {
-	*Store
-	t *testing.T
+	SqliteStore *SqliteStore
+	t           *testing.T
 }
 
-func (ts *TestStore) AddItemToBasket(basketKey, title string) int64 {
-	id, err := ts.Store.AddItemToBasket(basketKey, title)
-	require.NoError(ts.t, err)
+func (ts *TestStore) AddItemToBasket(basketKey string, title string) (int64, error) {
+	id, err := ts.SqliteStore.AddItemToBasket(basketKey, title)
 	time.Sleep(1001 * time.Microsecond)
-	return id
+	return id, err
 }
 
-func (ts *TestStore) SetItemCompletion(basketKey string, id int64, completed bool) {
-	err := ts.Store.SetItemCompletion(basketKey, id, completed)
-	require.NoError(ts.t, err)
+func (ts *TestStore) SetItemCompletion(basketKey string, id int64, completed bool) error {
+	err := ts.SqliteStore.SetItemCompletion(basketKey, id, completed)
 	time.Sleep(1001 * time.Microsecond)
+	return err
 }
 
-func setup(t *testing.T) *TestStore {
-	s, err := NewStore(":memory:")
+func (ts *TestStore) GetItemsForBasket(basketKey string) ([]Item, error) {
+	return ts.SqliteStore.GetItemsForBasket(basketKey)
+}
+
+func (ts *TestStore) Close() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func setup(t *testing.T) Store {
+	s, err := NewSqliteStore(":memory:")
 	require.NoError(t, err)
-	return &TestStore{Store: s, t: t}
+	return &TestStore{SqliteStore: s, t: t}
 }
 
 // endregion
@@ -71,10 +79,10 @@ func Test_Sorting(t *testing.T) {
 	t.Run("Updating completion moves item to the top", func(t *testing.T) {
 		store := setup(t)
 
-		id1 := store.AddItemToBasket(basket1Key, "Item 1")
+		id1, _ := store.AddItemToBasket(basket1Key, "Item 1")
 		store.AddItemToBasket(basket1Key, "Item 2")
-		id3 := store.AddItemToBasket(basket1Key, "Item 3")
-		id4 := store.AddItemToBasket(basket1Key, "Item 4")
+		id3, _ := store.AddItemToBasket(basket1Key, "Item 3")
+		id4, _ := store.AddItemToBasket(basket1Key, "Item 4")
 
 		store.SetItemCompletion(basket1Key, id1, false)
 		store.SetItemCompletion(basket1Key, id4, true)
@@ -92,7 +100,7 @@ func Test_ValidateInput(t *testing.T) {
 	t.Run("Adding item with empty title fails", func(t *testing.T) {
 		store := setup(t)
 
-		_, err := store.Store.AddItemToBasket(basket1Key, "")
+		_, err := store.AddItemToBasket(basket1Key, "")
 		require.Error(t, err)
 	})
 
@@ -100,7 +108,7 @@ func Test_ValidateInput(t *testing.T) {
 		store := setup(t)
 
 		longTitle := strings.Repeat("a", 256)
-		_, err := store.Store.AddItemToBasket(basket1Key, longTitle)
+		_, err := store.AddItemToBasket(basket1Key, longTitle)
 		require.Error(t, err)
 	})
 
@@ -109,13 +117,13 @@ func Test_ValidateInput(t *testing.T) {
 
 		uuidV1Key := "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 
-		_, err := store.Store.AddItemToBasket(uuidV1Key, "Valid Title")
+		_, err := store.AddItemToBasket(uuidV1Key, "Valid Title")
 		require.Error(t, err)
 
-		err = store.Store.SetItemCompletion(uuidV1Key, 1, false)
+		err = store.SetItemCompletion(uuidV1Key, 1, false)
 		require.Error(t, err)
 
-		_, err = store.Store.GetItemsForBasket(uuidV1Key)
+		_, err = store.GetItemsForBasket(uuidV1Key)
 		require.Error(t, err)
 	})
 }
@@ -124,11 +132,11 @@ func Test_IsolatedBaskets(t *testing.T) {
 	t.Run("Items in different baskets do not interfere", func(t *testing.T) {
 		store := setup(t)
 
-		id1 := store.AddItemToBasket(basket1Key, "Item A")
+		id1, _ := store.AddItemToBasket(basket1Key, "Item A")
 		store.AddItemToBasket(basket2Key, "Item B")
 
 		// Completing item in basket-1 should not affect basket-2
-		err := store.Store.SetItemCompletion(basket1Key, id1, true)
+		err := store.SetItemCompletion(basket1Key, id1, true)
 		require.NoError(t, err)
 
 		items1, _ := store.GetItemsForBasket(basket1Key)
@@ -139,11 +147,11 @@ func Test_IsolatedBaskets(t *testing.T) {
 	t.Run("Completing item with wrong basket key fails", func(t *testing.T) {
 		store := setup(t)
 
-		id1 := store.AddItemToBasket(basket1Key, "Item A")
+		id1, _ := store.AddItemToBasket(basket1Key, "Item A")
 		store.AddItemToBasket(basket2Key, "Item B")
 
 		// Attempting to complete item in basket-1 using basket-2 key should fail
-		err := store.Store.SetItemCompletion(basket2Key, id1, true)
+		err := store.SetItemCompletion(basket2Key, id1, true)
 		require.Error(t, err)
 	})
 }
