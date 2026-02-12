@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go-shop/backend/db"
 	"net/http"
 	"sync"
 
@@ -12,21 +13,33 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true }, // Allow Svelte to connect
 }
 
-type Message struct {
-	Type  string   `json:"type"`  // "update"
-	Items []string `json:"items"` // The full list
+type C2SMessage struct {
+	Type C2SCommand `json:"type"`
+
+	ItemName string `json:"itemName"`
+
+	Id        int64 `json:"id"`
+	Completed bool  `json:"completed"`
 }
 
-type BasketRoom struct {
-	clients map[*websocket.Conn]bool
-	items   []string
-	mu      sync.Mutex
+type S2CMessage struct {
+	Type  S2CCommand `json:"type"`
+	Items []db.Item  `json:"items"`
 }
 
 var rooms = make(map[string]*BasketRoom)
 var roomsMu sync.Mutex
 
+var store db.Store
+
 func main() {
+
+	sqliteStore, err := db.NewSqliteStore("db.sqlite")
+	if err != nil {
+		return
+	}
+	store = sqliteStore
+
 	// 2. WebSocket endpoint
 	http.HandleFunc("/ws", handleWebSocket)
 
@@ -49,36 +62,33 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	if !exists {
 		// Lazy Initialization: Create the basket because someone arrived
 		room = &BasketRoom{
-			clients: make(map[*websocket.Conn]bool),
-			items:   []string{},
+			basketKey: basketID,
+			clients:   make(map[*websocket.Conn]bool),
+			store:     store,
 		}
 		rooms[basketID] = room
 		fmt.Printf("Created new basket: %s\n", basketID)
 	}
 	roomsMu.Unlock()
 
-	// Register the user to the room
-	room.mu.Lock()
-	room.clients[conn] = true
-	// Send existing items (will be empty list if new)
-	conn.WriteJSON(Message{Type: "update", Items: room.items})
-	room.mu.Unlock()
+	room.LogInUser(conn)
 
 	// Listen for updates...
 	for {
-		var msg Message
+		var msg C2SMessage
 		if err := conn.ReadJSON(&msg); err != nil {
-			room.mu.Lock()
-			delete(room.clients, conn) // Clean up on disconnect
-			room.mu.Unlock()
+			fmt.Printf("Error reading from client: %s\n", err)
+			room.Remove(conn)
 			break
 		}
 
-		room.mu.Lock()
-		room.items = msg.Items
-		for client := range room.clients {
-			client.WriteJSON(msg)
+		switch msg.Type {
+		case C2SAddItem:
+			room.AddItem(msg.ItemName)
+		case C2SSetItemCompletion:
+			room.SetItemCompletion(msg.Id, msg.Completed)
 		}
-		room.mu.Unlock()
+
+		fmt.Printf("Received message for basket %s: %+v\n", basketID, msg)
 	}
 }

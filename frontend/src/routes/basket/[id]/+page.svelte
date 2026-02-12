@@ -1,19 +1,24 @@
-<script>
+<script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { page } from '$app/stores';
 
+    interface Item {
+        id: number;        // maps to Go int64
+        name: string;      // maps to Go Title (json:"name")
+        completed: boolean; // maps to Go Completed
+    }
+
     let id = $page.params.id;
-    let socket;
-    let items = [];
+    let socket: WebSocket;
+    let items: Item[] = [];
     let newItem = "";
 
     onMount(() => {
-        // Connect to Go WebSocket
         socket = new WebSocket(`ws://localhost:8080/ws?id=${id}`);
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            if (data.type === "update") {
+            if (data.type === "full_list") {
                 items = data.items; // UI updates automatically!
             }
         };
@@ -25,34 +30,64 @@
 
     function addItem() {
         if (!newItem) return;
-        const updatedItems = [...items, newItem];
 
         // Send the updated list to Go
         socket.send(JSON.stringify({
-            type: "update",
-            items: updatedItems
+            type: "addItem",
+            itemName: newItem
         }));
 
         newItem = "";
     }
 
-    function removeItem(index) {
-        const updatedItems = items.filter((_, i) => i !== index);
-        socket.send(JSON.stringify({ type: "update", items: updatedItems }));
+    function toggleItem(itemId: number, currentState: boolean) {
+        socket.send(JSON.stringify({
+            type: "setItemCompletion",
+            id: itemId,
+            completed: !currentState
+        }));
+    }
+
+    function removeItem(itemId: number) {
+        socket.send(JSON.stringify({
+            type: "deleteItem",
+            id: itemId
+        }));
     }
 </script>
 
 <h1>Basket: {id}</h1>
-<p>Share this URL. Anyone with the link can edit live!</p>
 
-<input bind:value={newItem} placeholder="Add item..." />
-<button on:click={addItem}>Add</button>
+<div class="input-group">
+    <input bind:value={newItem} placeholder="Add item..." on:keydown={(e) => e.key === 'Enter' && addItem()} />
+    <button on:click={addItem}>Add</button>
+</div>
 
 <ul>
-    {#each items as item, i}
-        <li>
-            {item}
-            <button on:click={() => removeItem(i)}>x</button>
+    {#each items as item (item.id)}
+        <li class={item.completed ? 'completed' : ''}>
+            <input
+                    type="checkbox"
+                    checked={item.completed}
+                    on:change={() => toggleItem(item.id, item.completed)}
+            />
+
+            <span class="title">{item.name}</span>
+
+            <button on:click={() => removeItem(item.id)}>x</button>
         </li>
     {/each}
 </ul>
+
+<style>
+    .completed .title {
+        text-decoration: line-through;
+        color: gray;
+    }
+    li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 5px;
+    }
+</style>

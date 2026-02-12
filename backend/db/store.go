@@ -10,7 +10,7 @@ type Basket struct {
 
 type Item struct {
 	ID        int64  `db:"id" json:"id"`
-	Title     string `db:"title" json:"title"`
+	Title     string `db:"title" json:"name"`
 	Completed bool   `db:"completed" json:"completed"`
 }
 
