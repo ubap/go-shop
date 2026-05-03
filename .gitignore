@@ -36,3 +36,7 @@ logs.txt
 /target/
 
 /frontend/node_modules
+
+.*sqlite
+.*sqlite-shm
+.*sqlite-wal
