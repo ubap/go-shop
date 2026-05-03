@@ -41,3 +41,6 @@ logs.txt
 *.sqlite-shm
 *.sqlite-wal
 
+dist/
+
+.DS_Store
