@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -39,11 +40,31 @@ var roomsMu sync.Mutex
 var store db.Store
 
 func main() {
-	publicFS, err := fs.Sub(frontendAssets, "dist")
+	distFS, err := fs.Sub(frontendAssets, "dist")
 	if err != nil {
 		log.Fatal(err)
 	}
-	http.Handle("/", http.FileServer(http.FS(publicFS)))
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/")
+
+		// serve index.html for "/"
+		if path == "" {
+			path = "index.html"
+		}
+
+		// check whether the file exists
+		f, err := distFS.Open(path)
+		if err != nil {
+			// when the file does not exist, replace the path to "/"
+			r.URL.Path = "/"
+		} else {
+			f.Close()
+		}
+
+		http.FileServer(http.FS(distFS)).ServeHTTP(w, r)
+	})
+
+	http.Handle("/", handler)
 
 	sqliteStore, err := db.NewSqliteStore("db.sqlite")
 	if err != nil {
