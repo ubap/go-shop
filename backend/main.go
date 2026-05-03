@@ -43,8 +43,12 @@ func main() {
 	// 2. WebSocket endpoint
 	http.HandleFunc("/ws", handleWebSocket)
 
-	fmt.Println("Backend running on :8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Running backend on :8080")
+	err = http.ListenAndServe(":8080", nil)
+	if err != nil {
+		fmt.Println("Error", err)
+	}
+	fmt.Println("Closing")
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
