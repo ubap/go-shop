@@ -1,35 +1,45 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
     import { page } from '$app/stores';
+    import { afterNavigate } from '$app/navigation';
 
     interface Item {
-        id: number;        // maps to Go int64
-        name: string;      // maps to Go Title (json:"name")
-        completed: boolean; // maps to Go Completed
+        id: number;
+        name: string;
+        completed: boolean;
     }
 
-    let id = $page.params.id;
-    let socket: WebSocket;
-    let items: Item[] = [];
-    let newItem = "";
+    let items: Item[] = $state([]);
+    let newItem: string = $state("");
+    let inputRef: HTMLInputElement | undefined = $state();
 
-    onMount(() => {
-        socket = new WebSocket(`ws://localhost:8080/ws?id=${id}`);
+    let socket: WebSocket | undefined; 
+
+    $effect(() => {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.hostname;
+        const wsPort = "8080";
+
+        socket = new WebSocket(`${protocol}//${host}:${wsPort}/ws?id=${$page.params.id}`);
 
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.type === "full_list") {
-                items = data.items; // UI updates automatically!
+                items = data.items;
             }
+        };
+
+        return () => {
+            // cleanup
+            if (socket) socket.close();
         };
     });
 
-    onDestroy(() => {
-        if (socket) socket.close();
+    afterNavigate(() => {
+        inputRef?.focus();
     });
 
     function addItem() {
-        if (!newItem || newItem.trim().length === 0) return;
+        if (!newItem || newItem.trim().length === 0 || !socket) return;
 
         socket.send(JSON.stringify({
             type: "addItem",
@@ -37,9 +47,11 @@
         }));
 
         newItem = "";
+        inputRef?.focus();
     }
 
     function toggleItem(itemId: number, currentState: boolean) {
+        if (!socket) return;
         socket.send(JSON.stringify({
             type: "setItemCompletion",
             id: itemId,
@@ -48,34 +60,37 @@
     }
 
     function removeItem(itemId: number) {
+        if (!socket) return;
         socket.send(JSON.stringify({
             type: "deleteItem",
             id: itemId
         }));
     }
-
-    function focusOnInit(node: HTMLInputElement) {
-        node.focus();
-    }
 </script>
 
-<h1>Basket: {id}</h1>
+<h1>Basket: {$page.params.id}</h1>
 
 <div class="input-group">
-    <input use:focusOnInit bind:value={newItem} placeholder="Add item..." on:keydown={(e) => e.key === 'Enter' && addItem()} />
+    <input 
+        bind:this={inputRef}
+        bind:value={newItem} 
+        placeholder="Add item..." 
+        on:keydown={(e) => e.key === 'Enter' && addItem()} 
+    />
     <button on:click={addItem}>Add</button>
 </div>
 
 <ul>
     {#each items as item (item.id)}
         <li class={item.completed ? 'completed' : ''}>
-            <input
+            <label class="row-label">
+                <input
                     type="checkbox"
                     checked={item.completed}
                     on:change={() => toggleItem(item.id, item.completed)}
-            />
-
-            <span class="title">{item.name}</span>
+                />
+                <span class="title">{item.name}</span>
+            </label>
 
             <button on:click={() => removeItem(item.id)}>x</button>
         </li>
@@ -83,14 +98,37 @@
 </ul>
 
 <style>
+    .input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
     .completed .title {
         text-decoration: line-through;
         color: gray;
     }
+    
     li {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        padding: 5px;
+        border-radius: 4px;
+        background-color: #fcfcfc;
+    }
+    
+    .row-label {
+        display: flex;
+        align-items: center;
         gap: 10px;
-        margin-bottom: 5px;
+        cursor: pointer;
+        flex-grow: 1;
+        padding: 5px 0;
+    }
+    
+    button {
+        cursor: pointer;
     }
 </style>

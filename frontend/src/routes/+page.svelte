@@ -2,8 +2,8 @@
     import { goto } from '$app/navigation';
 
     function createNewBasket() {
-        // Generate a unique ID (e.g., "550e8400-e29b-41d4-a716-446655440000")
-        const uniqueId = crypto.randomUUID();
+        // crypto is not available when not run in Secure Context (SSL)
+        const uniqueId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
 
         // Redirect the user to the new basket URL
         goto(`/basket/${uniqueId}`);
