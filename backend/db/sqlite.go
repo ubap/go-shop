@@ -117,6 +117,8 @@ func (s *SqliteStore) validateItemTitle(title string) bool {
 }
 
 func (s *SqliteStore) validateBasketKey(key string) bool {
+	return true
+	// TODO: FE can't generate UUID when not SSL
 	parsed, err := uuid.Parse(key)
 	if err != nil {
 		return false
