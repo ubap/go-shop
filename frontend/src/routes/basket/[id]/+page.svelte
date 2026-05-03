@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import { dev } from '$app/environment';
     import { afterNavigate } from '$app/navigation';
 
     interface Item {
@@ -14,13 +15,18 @@
 
     let socket: WebSocket | undefined; 
 
-    $effect(() => {
+        $effect(() => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.hostname;
-        const wsPort = "8080";
+        let wsUrl = "";
+        if (dev) {
+            const hostname = window.location.hostname;
+            wsUrl = `${protocol}//${hostname}:8080/ws?id=${$page.params.id}`;
+        } else {
+            const host = window.location.host; 
+            wsUrl = `${protocol}//${host}/ws?id=${$page.params.id}`;
+        }
 
-        socket = new WebSocket(`${protocol}//${host}:${wsPort}/ws?id=${$page.params.id}`);
-
+        socket = new WebSocket(wsUrl);
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.type === "full_list") {

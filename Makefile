@@ -14,7 +14,6 @@ build-frontend:
 	@echo "Building frontend..."
 	@$(MAKE) -C frontend build
 
-# Target to build the backend
 build-backend:
 	@echo "Building backend..."
 	@$(MAKE) -C backend build

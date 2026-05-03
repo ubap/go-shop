@@ -1,8 +1,11 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"go-shop/backend/db"
+	"io/fs"
+	"log"
 	"net/http"
 	"sync"
 
@@ -27,12 +30,20 @@ type S2CMessage struct {
 	Items []db.Item  `json:"items"`
 }
 
+//go:embed "dist/*"
+var frontendAssets embed.FS
+
 var rooms = make(map[string]*BasketRoom)
 var roomsMu sync.Mutex
 
 var store db.Store
 
 func main() {
+	publicFS, err := fs.Sub(frontendAssets, "dist")
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Handle("/", http.FileServer(http.FS(publicFS)))
 
 	sqliteStore, err := db.NewSqliteStore("db.sqlite")
 	if err != nil {
