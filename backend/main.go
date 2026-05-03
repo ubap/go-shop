@@ -57,8 +57,11 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, _ := upgrader.Upgrade(w, r, nil)
-	defer conn.Close()
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Printf("Upgrade error: %v\n", err)
+		return
+	}
 
 	// LOCK the rooms map to check/create safely
 	roomsMu.Lock()
