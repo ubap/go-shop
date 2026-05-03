@@ -29,9 +29,8 @@
     });
 
     function addItem() {
-        if (!newItem) return;
+        if (!newItem || newItem.trim().length === 0) return;
 
-        // Send the updated list to Go
         socket.send(JSON.stringify({
             type: "addItem",
             itemName: newItem
