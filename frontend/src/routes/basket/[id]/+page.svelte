@@ -53,12 +53,16 @@
             id: itemId
         }));
     }
+
+    function focusOnInit(node: HTMLInputElement) {
+        node.focus();
+    }
 </script>
 
 <h1>Basket: {id}</h1>
 
 <div class="input-group">
-    <input bind:value={newItem} placeholder="Add item..." on:keydown={(e) => e.key === 'Enter' && addItem()} />
+    <input use:focusOnInit bind:value={newItem} placeholder="Add item..." on:keydown={(e) => e.key === 'Enter' && addItem()} />
     <button on:click={addItem}>Add</button>
 </div>
 
