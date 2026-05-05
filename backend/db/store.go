@@ -20,6 +20,9 @@ type Store interface {
 	// SetItemCompletion updates an item but ONLY if it belongs to the specified basket.
 	// This ensures that knowing an item ID isn't enough to modify someone else's list.
 	SetItemCompletion(basketKey string, id int64, completed bool) error
+
+	DeleteItem(basketKey string, itemId int64) error
+
 	// GetItemsForBasket retrieves all items for a given basket, sorted by completion status and recency.
 	GetItemsForBasket(basketKey string) ([]Item, error)
 

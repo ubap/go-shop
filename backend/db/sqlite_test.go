@@ -14,6 +14,11 @@ type TestStore struct {
 	t           *testing.T
 }
 
+func (ts *TestStore) DeleteItem(basketKey string, itemId int64) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (ts *TestStore) AddItemToBasket(basketKey string, title string) (int64, error) {
 	id, err := ts.SqliteStore.AddItemToBasket(basketKey, title)
 	time.Sleep(1001 * time.Microsecond)

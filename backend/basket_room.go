@@ -68,6 +68,11 @@ func (b *BasketRoom) AddItem(itemName string) {
 	b.UpdateClients()
 }
 
+func (b *BasketRoom) DeleteItem(itemId int64) {
+	b.store.DeleteItem(b.basketKey, itemId)
+	b.UpdateClients()
+}
+
 func (b *BasketRoom) SetItemCompletion(itemId int64, completed bool) {
 	store.SetItemCompletion(b.basketKey, itemId, completed)
 	b.UpdateClients()

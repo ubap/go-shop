@@ -85,6 +85,19 @@ func (s *SqliteStore) SetItemCompletion(basketKey string, id int64, completed bo
 	return nil
 }
 
+func (s *SqliteStore) DeleteItem(basketKey string, itemId int64) error {
+	if !s.validateBasketKey(basketKey) {
+		return fmt.Errorf("invalid basket key")
+	}
+
+	query := "DELETE FROM basket_items WHERE basket_key = ? AND id = ?"
+	_, err := s.conn.Exec(query, basketKey, itemId)
+	if err != nil {
+		return fmt.Errorf("delete item: %w", err)
+	}
+	return nil
+}
+
 func (s *SqliteStore) GetItemsForBasket(basketKey string) ([]Item, error) {
 	if !s.validateBasketKey(basketKey) {
 		return nil, fmt.Errorf("invalid basket key")
