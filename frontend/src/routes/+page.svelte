@@ -1,10 +1,20 @@
 <script>
     import { goto } from '$app/navigation';
 
-    function createNewBasket() {
+    function generateUUID() {
         // crypto is not available when not run in Secure Context (SSL)
-        const uniqueId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
 
+    function createNewBasket() {
+        const uniqueId = generateUUID();
         // Redirect the user to the new basket URL
         goto(`/basket/${uniqueId}`);
     }
