@@ -10,21 +10,64 @@
     }
 </script>
 
-<h1>Welcome to ShoppingList</h1>
-<p>Create a private basket and share the URL with others.</p>
+<div class="landing-container">
+    <h1 class="title">Shopping List</h1>
+    <p class="subtitle">Create a private basket and share the URL with others to collaborate in real-time.</p>
 
-<button on:click={createNewBasket}>
-    Create New Basket
-</button>
+    <button class="btn-create" on:click={createNewBasket}>
+        Create New Basket
+    </button>
+</div>
 
 <style>
-    button {
-        padding: 10px 20px;
+    .landing-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        font-family: system-ui, -apple-system, sans-serif;
+        box-sizing: border-box;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+    }
+
+    .title {
+        font-size: 2.5rem;
+        margin-bottom: 16px;
+        color: #333;
+        font-weight: 800;
+        margin-top: 0;
+    }
+
+    .subtitle {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 40px;
+        line-height: 1.5;
+        max-width: 400px;
+    }
+
+    .btn-create {
+        padding: 16px 32px;
         font-size: 1.2rem;
-        cursor: pointer;
-        background: #ff3e00;
+        font-weight: 600;
+        background-color: #007bff;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+    }
+
+    .btn-create:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-create:active {
+        transform: translateY(2px);
     }
 </style>
