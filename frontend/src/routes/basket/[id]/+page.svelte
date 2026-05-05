@@ -114,8 +114,6 @@
         </div>
     {/if}
 
-    <h1 class="header-title">Basket: {$page.params.id}</h1>
-
     <div class="input-group">
         <input
                 class="item-input"
@@ -150,6 +148,16 @@
             </li>
         {/each}
     </ul>
+
+    <div class="list-footer">
+        <span class="footer-id">ID: {$page.params.id}</span>
+        <br/>
+        <button class="btn-copy" on:click={() => {
+            navigator.clipboard.writeText(window.location.href);
+        }}>
+            Copy Share URL
+        </button>
+    </div>
 </div>
 
 <style>
@@ -319,5 +327,36 @@
 
     input:disabled, button:disabled {
         cursor: not-allowed;
+    }
+
+    .list-footer {
+        margin-top: 32px;
+        padding-top: 16px;
+        border-top: 1px dashed #ddd;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: #888;
+    }
+
+    .footer-id {
+        font-family: monospace;
+    }
+
+    .btn-copy {
+        background: none;
+        border: 1px solid #ccc;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #555;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-copy:hover {
+        background: #e9ecef;
+        color: #333;
     }
 </style>
