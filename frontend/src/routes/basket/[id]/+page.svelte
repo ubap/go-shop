@@ -28,16 +28,35 @@
             wsUrl = `${protocol}//${host}/ws?id=${$page.params.id}`;
         }
 
-        socket = new WebSocket(wsUrl);
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === "full_list") {
-                items = data.items;
-            }
-        };
+        let isMounted = true;
+        let reconnectTimeout: ReturnType<typeof setTimeout>;
+
+        function connect() {
+            if (!isMounted) return;
+
+            socket = new WebSocket(wsUrl);
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "full_list") {
+                    items = data.items;
+                }
+            };
+            socket.onclose = () => {
+                if (isMounted) {
+                    console.log("WebSocket disconnected. Reconnecting in 2 seconds...");
+                    clearTimeout(reconnectTimeout);
+                    reconnectTimeout = setTimeout(connect, 2000);
+                }
+            };
+            socket.onerror = () => {
+                socket?.close();
+            };
+        }
+        connect();
 
         return () => {
-            // cleanup
+            isMounted = false;
+            clearTimeout(reconnectTimeout);
             if (socket) socket.close();
         };
     });
@@ -46,10 +65,14 @@
         inputRef?.focus();
     });
 
-    function addItem() {
-        if (!newItem || newItem.trim().length === 0 || !socket) return;
+    function isSocketReady() {
+        return socket && socket.readyState === WebSocket.OPEN;
+    }
 
-        socket.send(JSON.stringify({
+    function addItem() {
+        if (!newItem || newItem.trim().length === 0 || !isSocketReady()) return;
+
+        socket!.send(JSON.stringify({
             type: "addItem",
             itemName: newItem
         }));
@@ -59,8 +82,9 @@
     }
 
     function toggleItem(itemId: number, currentState: boolean) {
-        if (!socket) return;
-        socket.send(JSON.stringify({
+        if (!isSocketReady()) return;
+
+        socket!.send(JSON.stringify({
             type: "setItemCompletion",
             id: itemId,
             completed: !currentState
@@ -68,8 +92,9 @@
     }
 
     function removeItem(itemId: number) {
-        if (!socket) return;
-        socket.send(JSON.stringify({
+        if (!isSocketReady()) return;
+
+        socket!.send(JSON.stringify({
             type: "deleteItem",
             id: itemId
         }));
