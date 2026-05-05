@@ -73,6 +73,10 @@ func SPAHandler() http.HandlerFunc {
 			}
 		}
 
+		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		}
+
 		fileServer.ServeHTTP(w, r)
 	}
 }
