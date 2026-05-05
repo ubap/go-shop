@@ -40,39 +40,13 @@ var roomsMu sync.Mutex
 var store db.Store
 
 func main() {
-	distFS, err := fs.Sub(frontendAssets, "dist")
-	if err != nil {
-		log.Fatal(err)
-	}
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimPrefix(r.URL.Path, "/")
-
-		// serve index.html for "/"
-		if path == "" {
-			path = "index.html"
-		}
-
-		// check whether the file exists
-		f, err := distFS.Open(path)
-		if err != nil {
-			// when the file does not exist, replace the path to "/"
-			r.URL.Path = "/"
-		} else {
-			f.Close()
-		}
-
-		http.FileServer(http.FS(distFS)).ServeHTTP(w, r)
-	})
-
-	http.Handle("/", handler)
-
 	sqliteStore, err := db.NewSqliteStore("db.sqlite")
 	if err != nil {
 		return
 	}
 	store = sqliteStore
 
-	// 2. WebSocket endpoint
+	http.Handle("/", SPAHandler())
 	http.HandleFunc("/ws", handleWebSocket)
 
 	fmt.Println("Running backend on :9090")
@@ -81,6 +55,26 @@ func main() {
 		fmt.Println("Error", err)
 	}
 	fmt.Println("Closing")
+}
+
+func SPAHandler() http.HandlerFunc {
+	distFS, err := fs.Sub(frontendAssets, "dist")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fileServer := http.FileServer(http.FS(distFS))
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		if path != "" {
+			_, err := fs.Stat(distFS, path)
+			if err != nil {
+				r.URL.Path = "/"
+			}
+		}
+
+		fileServer.ServeHTTP(w, r)
+	}
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
