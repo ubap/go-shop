@@ -2,6 +2,8 @@
     import { page } from '$app/stores';
     import { dev } from '$app/environment';
     import { afterNavigate } from '$app/navigation';
+    import { flip } from 'svelte/animate';
+    import { slide } from 'svelte/transition';
 
     interface Item {
         id: number;
@@ -90,7 +92,9 @@
 
     <ul class="item-list">
         {#each items as item (item.id)}
-            <li class={item.completed ? 'completed' : ''}>
+            <li class={item.completed ? 'completed' : ''}
+                animate:flip={{ duration: 300 }}
+                transition:slide|local>
                 <label class="row-label">
                     <input
                             class="checkbox"
