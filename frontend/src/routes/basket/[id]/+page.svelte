@@ -3,7 +3,7 @@
     import { dev } from '$app/environment';
     import { afterNavigate } from '$app/navigation';
     import { flip } from 'svelte/animate';
-    import { slide } from 'svelte/transition';
+    import { slide, fade } from 'svelte/transition';
 
     interface Item {
         id: number;
@@ -16,6 +16,7 @@
     let inputRef: HTMLInputElement | undefined = $state();
 
     let socket: WebSocket | undefined;
+    let isConnected = $state(false);
 
     $effect(() => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -35,6 +36,9 @@
             if (!isMounted) return;
 
             socket = new WebSocket(wsUrl);
+            socket.onopen = () => {
+                isConnected = true;
+            };
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.type === "full_list") {
@@ -42,6 +46,7 @@
                 }
             };
             socket.onclose = () => {
+                isConnected = false;
                 if (isMounted) {
                     console.log("WebSocket disconnected. Reconnecting in 2 seconds...");
                     clearTimeout(reconnectTimeout);
@@ -102,6 +107,13 @@
 </script>
 
 <div class="shoplist-container">
+    {#if !isConnected}
+        <div class="connection-overlay" transition:fade={{ duration: 200 }}>
+            <div class="loader"></div>
+            <p class="loader-text">Connecting...</p>
+        </div>
+    {/if}
+
     <h1 class="header-title">Basket: {$page.params.id}</h1>
 
     <div class="input-group">
@@ -111,8 +123,9 @@
                 bind:value={newItem}
                 placeholder="Add item..."
                 on:keydown={(e) => e.key === 'Enter' && addItem()}
+                disabled={!isConnected}
         />
-        <button class="btn-add" on:click={addItem}>Add</button>
+        <button class="btn-add" on:click={addItem} disabled={!isConnected}>Add</button>
     </div>
 
     <ul class="item-list">
@@ -126,11 +139,12 @@
                             type="checkbox"
                             checked={item.completed}
                             on:change={() => toggleItem(item.id, item.completed)}
+                            disabled={!isConnected}
                     />
                     <span class="title">{item.name}</span>
                 </label>
 
-                <button class="btn-delete" on:click={() => removeItem(item.id)}>✕</button>
+                <button class="btn-delete" on:click={() => removeItem(item.id)} disabled={!isConnected}>✕</button>
             </li>
         {/each}
     </ul>
@@ -143,6 +157,44 @@
         padding: 20px;
         font-family: system-ui, -apple-system, sans-serif;
         box-sizing: border-box;
+        position: relative;
+    }
+
+    .connection-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(2px);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 12px;
+    }
+
+    .loader-text {
+        color: #007bff;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     .header-title {
@@ -188,7 +240,7 @@
         transition: background-color 0.2s;
     }
 
-    .btn-add:hover {
+    .btn-add:hover:not(:disabled) {
         background-color: #0056b3;
     }
 
@@ -259,7 +311,11 @@
         transition: background-color 0.2s;
     }
 
-    .btn-delete:hover {
+    .btn-delete:hover:not(:disabled) {
         background-color: #ffe6e6;
+    }
+
+    input:disabled, button:disabled {
+        cursor: not-allowed;
     }
 </style>
