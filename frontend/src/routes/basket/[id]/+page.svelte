@@ -119,6 +119,8 @@
     <div class="input-group">
         <input
                 class="item-input"
+                type="search"
+                autocomplete="off"
                 bind:this={inputRef}
                 bind:value={newItem}
                 placeholder="Add item..."
