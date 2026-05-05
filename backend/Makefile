@@ -28,3 +28,7 @@ clean:
 install:
 	@echo "==> Installing..."
 	go mod tidy
+
+deploy:
+	@echo "==> Deploying..."
+	./deploy.sh

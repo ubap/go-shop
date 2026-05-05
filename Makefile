@@ -41,3 +41,7 @@ test-frontend:
 test-backend:
 	@echo "Testing backend..."
 	@$(MAKE) -C backend test
+
+.PHONY: deploy
+deploy: build-frontend
+	@$(MAKE) -C backend deploy
