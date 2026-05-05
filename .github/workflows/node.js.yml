@@ -43,6 +43,11 @@ jobs:
         # reproducible install, which is faster and safer than 'npm install'.
         run: npm ci
 
+      - name: Install playwright
+        # 'npm ci' is recommended for CI. It uses package-lock.json for a clean,
+        # reproducible install, which is faster and safer than 'npm install'.
+        run: npx playwright install
+
       - name: Build project
         run: npm run build --if-present
 
