@@ -57,6 +57,12 @@
                 socket?.close();
             };
         }
+        document.addEventListener('visibilitychange', () => {
+            // connect instantly after the page is unminimized on mobile
+            if (document.visibilityState === 'visible') {
+                connect();
+            }
+        });
         connect();
 
         return () => {
