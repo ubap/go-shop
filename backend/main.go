@@ -120,6 +120,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		msg.ItemName = strings.TrimSpace(msg.ItemName)
 		switch msg.Type {
 		case C2SAddItem:
 			room.AddItem(msg.ItemName)
