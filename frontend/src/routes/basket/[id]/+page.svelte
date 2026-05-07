@@ -106,6 +106,20 @@
     }
 </script>
 
+<header class="app-header">
+    <div class="header-content">
+    <div class="header-brand">
+        <span class="logo">🛒</span>
+        <div>
+            <h1 class="app-title">Shopping List</h1>
+        </div>
+    </div>
+
+    <div class="header-user">
+    </div>
+    </div>
+</header>
+
 <div class="shoplist-container">
     {#if !isConnected}
         <div class="connection-overlay" transition:fade={{ duration: 200 }}>
@@ -152,7 +166,7 @@
     </ul>
 
     <div class="list-footer">
-        <span class="footer-id">ID: {$page.params.id}</span>
+        <span class="footer-id">List ID: {$page.params.id}</span>
         <br/>
         <button class="btn-copy" on:click={() => {
             navigator.clipboard.writeText(window.location.href);
@@ -239,7 +253,7 @@
     }
 
     .btn-add {
-        flex-shrink: 0; /* KLUCZOWE: Zapobiega zgnieceniu przycisku, gdy brakuje miejsca */
+        flex-shrink: 0;
         box-sizing: border-box;
         padding: 12px 24px;
         font-size: 16px;
@@ -359,6 +373,57 @@
 
     .btn-copy:hover {
         background: #e9ecef;
+        color: #333;
+    }
+
+    .header-content {
+        max-width: 600px;
+        margin: 0 auto;
+
+        padding: 6px 20px;
+
+        box-sizing: border-box;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        height: 32px;
+    }
+
+    .header-user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .app-header {
+        font-family: system-ui, -apple-system, sans-serif;
+
+        border-bottom: 1px solid #eaeaea;
+        background-color: #ffffff;
+        padding: 12px 20px;
+    }
+
+    .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .logo {
+        font-size: 20px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .app-title {
+        margin: 0 !important;
+        font-size: 1.15rem;
+        font-weight: 600;
+        line-height: 1;
         color: #333;
     }
 </style>
