@@ -120,7 +120,16 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		msg.ItemName = strings.TrimSpace(msg.ItemName)
+		// TODO Extract from here
+		trimmed := strings.TrimSpace(msg.ItemName)
+		runes := []rune(trimmed)
+		// 2. Limit to 55 characters
+		if len(runes) > 55 {
+			msg.ItemName = string(runes[:55])
+		} else {
+			msg.ItemName = trimmed
+		}
+
 		switch msg.Type {
 		case C2SAddItem:
 			room.AddItem(msg.ItemName)
