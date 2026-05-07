@@ -119,6 +119,8 @@
                 class="item-input"
                 type="search"
                 autocomplete="off"
+                enterkeyhint="done"
+
                 bind:this={inputRef}
                 bind:value={newItem}
                 placeholder="Add item..."
