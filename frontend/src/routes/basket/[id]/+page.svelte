@@ -3,7 +3,7 @@
     import { dev } from '$app/environment';
     import { afterNavigate } from '$app/navigation';
     import { flip } from 'svelte/animate';
-    import { slide, fade } from 'svelte/transition';
+    import { slide, fade, fly } from 'svelte/transition';
 
     interface Item {
         id: number;
@@ -17,6 +17,8 @@
 
     let socket: WebSocket | undefined;
     let isConnected = $state(false);
+    let showUndo = $state(false);
+    let lastDeletedItemId = $state(-1);
 
     $effect(() => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -105,10 +107,22 @@
     function removeItem(itemId: number) {
         if (!isSocketReady()) return;
 
+        lastDeletedItemId = itemId;
+        showUndo = true;
+
+        setTimeout(() => {
+            showUndo = false;
+        }, 5000);
+
         socket!.send(JSON.stringify({
             type: "deleteItem",
             id: itemId
         }));
+    }
+
+    function restoreItem() {
+        if (lastDeletedItemId == -1) return;
+        showUndo = false;
     }
 </script>
 
@@ -181,6 +195,15 @@
         </button>
     </div>
 </div>
+
+{#if showUndo}
+    <div class="undo-toast" transition:fly={{ y: 50, duration: 300 }}>
+        <span class="undo-text">Deleted: <strong>{lastDeletedItemId}</strong></span>
+        <button class="undo-button" on:click={restoreItem}>
+            Undo
+        </button>
+    </div>
+{/if}
 
 <style>
     .shoplist-container {
@@ -431,5 +454,46 @@
         font-weight: 600;
         line-height: 1;
         color: #333;
+    }
+
+    .undo-toast {
+        position: fixed;
+        bottom: 20px; /* Odstęp od dołu ekranu */
+        left: 50%;
+        transform: translateX(-50%); /* Centrowanie w poziomie */
+
+        background-color: #333; /* Ciemne tło, żeby się odróżniało */
+        color: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 9999; /* Musi być nad wszystkim innym */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 280px;
+        justify-content: space-between;
+
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .undo-text {
+        font-size: 14px;
+    }
+
+    .undo-button {
+        background: none;
+        border: none;
+        color: #4dabf7; /* Jasnoniebieski kolor akcji */
+        font-weight: 800;
+        cursor: pointer;
+        padding: 4px 8px;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+    }
+
+    .undo-button:hover {
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 4px;
     }
 </style>
