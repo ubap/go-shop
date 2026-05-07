@@ -42,6 +42,7 @@ var store db.Store
 func main() {
 	sqliteStore, err := db.NewSqliteStore("db.sqlite")
 	if err != nil {
+		log.Fatal(err)
 		return
 	}
 	store = sqliteStore

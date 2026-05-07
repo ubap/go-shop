@@ -1,14 +1,16 @@
 package db
 
 import (
-	_ "embed"
+	"embed"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pressly/goose/v3"
+	_ "modernc.org/sqlite"
 )
 
-//go:embed schema.sql
-var schemaSQL string
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
 
 func NewSqliteStore(dbPath string) (*SqliteStore, error) {
 	db, err := sqlx.Open("sqlite", dbPath)
@@ -24,8 +26,14 @@ func NewSqliteStore(dbPath string) (*SqliteStore, error) {
 		return nil, fmt.Errorf("failed to set pragmas: %w", err)
 	}
 
-	if _, err := db.Exec(schemaSQL); err != nil {
-		return nil, fmt.Errorf("failed to initialize schema: %w", err)
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return nil, fmt.Errorf("failed to set goose dialect: %w", err)
+	}
+
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.Up(db.DB, "migrations"); err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return &SqliteStore{conn: db}, nil

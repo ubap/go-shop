@@ -1,3 +1,5 @@
+-- +goose Up
+
 -- Baskets represent individual shopping lists.
 -- Each basket is identified by a unique key.
 CREATE TABLE IF NOT EXISTS baskets
@@ -31,6 +33,7 @@ CREATE TABLE IF NOT EXISTS basket_items
     UNIQUE (basket_key, title COLLATE NOCASE)
 );
 
+-- +goose StatementBegin
 CREATE TRIGGER IF NOT EXISTS update_item_touched_at
     AFTER UPDATE
     ON basket_items
@@ -39,3 +42,4 @@ BEGIN
     SET touched_at = strftime('%Y-%m-%d %H:%M:%f', 'now')
     WHERE id = NEW.id;
 END;
+-- +goose StatementEnd
