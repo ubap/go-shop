@@ -109,6 +109,30 @@ func (s *SqliteStore) DeleteItem(basketKey string, itemId int64) error {
 	return nil
 }
 
+func (s *SqliteStore) RestoreItem(basketKey string, itemId int64) error {
+	if !s.validateBasketKey(basketKey) {
+		return fmt.Errorf("invalid basket key")
+	}
+
+	query := `
+        UPDATE basket_items 
+        SET status = ? 
+        WHERE basket_key = ? AND id = ? AND status != ?
+    `
+
+	res, err := s.conn.Exec(query, StatusActive, basketKey, itemId, StatusActive)
+	if err != nil {
+		return fmt.Errorf("undelete item: %w", err)
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("item not found or already active")
+	}
+
+	return nil
+}
+
 func (s *SqliteStore) GetItemsForBasket(basketKey string) ([]Item, error) {
 	if !s.validateBasketKey(basketKey) {
 		return nil, fmt.Errorf("invalid basket key")

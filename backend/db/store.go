@@ -30,6 +30,7 @@ type Store interface {
 	SetItemCompletion(basketKey string, id int64, completed bool) error
 
 	DeleteItem(basketKey string, itemId int64) error
+	RestoreItem(basketKey string, itemId int64) error
 
 	// GetItemsForBasket retrieves all items for a given basket, sorted by completion status and recency.
 	GetItemsForBasket(basketKey string) ([]Item, error)

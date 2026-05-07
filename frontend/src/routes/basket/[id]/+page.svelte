@@ -17,8 +17,10 @@
 
     let socket: WebSocket | undefined;
     let isConnected = $state(false);
+
     let showUndo = $state(false);
-    let lastDeletedItemId = $state(-1);
+    let lastDeletedItem = $state<Item | null>(null);
+    let undoTimeout : ReturnType<typeof setTimeout> | undefined;
 
     $effect(() => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -104,25 +106,31 @@
         }));
     }
 
-    function removeItem(itemId: number) {
+    function removeItem(item: Item) {
         if (!isSocketReady()) return;
 
-        lastDeletedItemId = itemId;
+        lastDeletedItem = item;
         showUndo = true;
-
-        setTimeout(() => {
+        clearTimeout(undoTimeout);
+        undoTimeout = setTimeout(() => {
             showUndo = false;
         }, 5000);
 
         socket!.send(JSON.stringify({
             type: "deleteItem",
-            id: itemId
+            id: item.id
         }));
     }
 
     function restoreItem() {
-        if (lastDeletedItemId == -1) return;
+        if (lastDeletedItem == null) return;
+        socket!.send(JSON.stringify({
+            type: "restoreItem",
+            id: lastDeletedItem.id
+        }));
         showUndo = false;
+        clearTimeout(undoTimeout);
+
     }
 </script>
 
@@ -180,7 +188,7 @@
                     <span class="title">{item.name}</span>
                 </label>
 
-                <button class="btn-delete" on:click={() => removeItem(item.id)} disabled={!isConnected}>✕</button>
+                <button class="btn-delete" on:click={() => removeItem(item)} disabled={!isConnected}>✕</button>
             </li>
         {/each}
     </ul>
@@ -198,7 +206,7 @@
 
 {#if showUndo}
     <div class="undo-toast" transition:fly={{ y: 50, duration: 300 }}>
-        <span class="undo-text">Deleted: <strong>{lastDeletedItemId}</strong></span>
+        <span class="undo-text">Deleted: <strong>{lastDeletedItem?.name}</strong></span>
         <button class="undo-button" on:click={restoreItem}>
             Undo
         </button>

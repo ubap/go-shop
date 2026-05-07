@@ -125,6 +125,8 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			room.AddItem(msg.ItemName)
 		case C2SDeleteItem:
 			room.DeleteItem(msg.Id)
+		case C2SRestoreItem:
+			room.RestoreItem(msg.Id)
 		case C2SSetItemCompletion:
 			room.SetItemCompletion(msg.Id, msg.Completed)
 		}

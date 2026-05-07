@@ -14,6 +14,11 @@ type TestStore struct {
 	t           *testing.T
 }
 
+func (ts *TestStore) RestoreItem(basketKey string, itemId int64) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (ts *TestStore) DeleteItem(basketKey string, itemId int64) error {
 	//TODO implement me
 	panic("implement me")
