@@ -90,11 +90,22 @@ func (s *SqliteStore) DeleteItem(basketKey string, itemId int64) error {
 		return fmt.Errorf("invalid basket key")
 	}
 
-	query := "DELETE FROM basket_items WHERE basket_key = ? AND id = ?"
-	_, err := s.conn.Exec(query, basketKey, itemId)
+	query := `
+        UPDATE basket_items 
+        SET status = ? 
+        WHERE basket_key = ? AND id = ? AND status != ?
+    `
+
+	res, err := s.conn.Exec(query, StatusDeleted, basketKey, itemId, StatusDeleted)
 	if err != nil {
-		return fmt.Errorf("delete item: %w", err)
+		return fmt.Errorf("soft delete item: %w", err)
 	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("item not found or already deleted")
+	}
+
 	return nil
 }
 
@@ -106,12 +117,12 @@ func (s *SqliteStore) GetItemsForBasket(basketKey string) ([]Item, error) {
 	var items []Item
 
 	query := `
-		SELECT id, title, completed 
+		SELECT id, title, completed, status
 		FROM basket_items 
-		WHERE basket_key = ?
+		WHERE basket_key = ? and status = ?
 		ORDER BY  completed ASC, touched_at DESC, id DESC`
 
-	err := s.conn.Select(&items, query, basketKey)
+	err := s.conn.Select(&items, query, basketKey, StatusActive)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch items for basket %s: %w", basketKey, err)
 	}

@@ -8,10 +8,18 @@ type Basket struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
+type ItemStatus string
+
+const (
+	StatusActive  ItemStatus = "active"
+	StatusDeleted ItemStatus = "deleted"
+)
+
 type Item struct {
-	ID        int64  `db:"id" json:"id"`
-	Title     string `db:"title" json:"name"`
-	Completed bool   `db:"completed" json:"completed"`
+	ID        int64      `db:"id" json:"id"`
+	Title     string     `db:"title" json:"name"`
+	Completed bool       `db:"completed" json:"completed"`
+	Status    ItemStatus `db:"status" json:"status"`
 }
 
 type Store interface {
