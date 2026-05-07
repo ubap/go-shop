@@ -39,14 +39,17 @@ func (s *SqliteStore) AddItemToBasket(basketKey string, title string) (int64, er
 	}
 
 	query := `
-		INSERT INTO basket_items (basket_key, title)
-		VALUES (?, ?)
+		INSERT INTO basket_items (basket_key, title, status, completed)
+		VALUES (?, ?, ?, 0)
 		ON CONFLICT(basket_key, title COLLATE NOCASE)
-		DO UPDATE SET title = excluded.title
+		DO UPDATE SET
+		              title = excluded.title,
+		              completed = excluded.completed,
+					  status = excluded.status
 		RETURNING id
 	`
 	var id int64
-	err = tx.QueryRow(query, basketKey, title).Scan(&id)
+	err = tx.QueryRow(query, basketKey, title, StatusActive).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("upsert item: %w", err)
 	}
