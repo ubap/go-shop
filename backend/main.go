@@ -89,6 +89,12 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
+	defer func(conn *websocket.Conn) {
+		err := conn.Close()
+		if err != nil {
+			fmt.Println("Error closing websocket connection")
+		}
+	}(conn)
 	if err != nil {
 		fmt.Printf("Upgrade error: %v\n", err)
 		return
