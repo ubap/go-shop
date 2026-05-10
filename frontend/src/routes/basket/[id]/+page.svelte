@@ -37,8 +37,8 @@
         let reconnectTimeout: ReturnType<typeof setTimeout>;
 
         function connect() {
-            if (!isMounted) return;
-
+            if (!isMounted || isSocketReady()) return;
+            console.log(`Connecting to ws ...`);
             socket = new WebSocket(wsUrl);
             socket.onopen = () => {
                 isConnected = true;
