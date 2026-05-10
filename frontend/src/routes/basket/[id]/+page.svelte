@@ -23,6 +23,11 @@
     let undoTimeout : ReturnType<typeof setTimeout> | undefined;
 
     $effect(() => {
+        console.log(window.__INITIAL_DATA__)
+        if (window.__INITIAL_DATA__) {
+            items = window.__INITIAL_DATA__;
+        }
+
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         let wsUrl = "";
         if (dev) {

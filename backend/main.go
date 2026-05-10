@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"go-shop/backend/db"
 	"io/fs"
@@ -66,19 +68,35 @@ func SPAHandler() http.HandlerFunc {
 	fileServer := http.FileServer(http.FS(distFS))
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		path := strings.TrimPrefix(r.URL.Path, "/")
-		if path != "" {
-			_, err := fs.Stat(distFS, path)
-			if err != nil {
-				r.URL.Path = "/"
+		originalPath := r.URL.Path
+		cleanPath := strings.TrimPrefix(originalPath, "/")
+		isFile := false
+		if cleanPath != "" {
+			if _, err := fs.Stat(distFS, cleanPath); err == nil {
+				isFile = true
 			}
 		}
-
-		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		if isFile && originalPath != "/" && originalPath != "/index.html" {
+			fileServer.ServeHTTP(w, r)
+			return
 		}
-
-		fileServer.ServeHTTP(w, r)
+		indexBytes, err := fs.ReadFile(distFS, "index.html")
+		if err != nil {
+			http.Error(w, "", http.StatusInternalServerError)
+			return
+		}
+		var initialData []db.Item = nil
+		if strings.HasPrefix(originalPath, "/basket/") {
+			basketKey := strings.TrimPrefix(originalPath, "/basket/")
+			initialData, err = store.GetItemsForBasket(basketKey)
+		}
+		jsonData, err := json.Marshal(initialData)
+		if err != nil {
+			jsonData = []byte("null")
+		}
+		placeholder := []byte(`null /* INJECT_INITIAL_DATA */`)
+		finalHTML := bytes.Replace(indexBytes, placeholder, jsonData, 1)
+		w.Write(finalHTML)
 	}
 }
 
