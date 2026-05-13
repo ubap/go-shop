@@ -141,15 +141,17 @@
 
 <header class="app-header">
     <div class="header-content">
-    <div class="header-brand">
-        <span class="logo">🛒</span>
-        <div>
-            <h1 class="app-title">Shopping List</h1>
+        <div class="header-brand">
+            <span class="logo">🛒</span>
+            <div>
+                <h1 class="app-title">Shopping List</h1>
+            </div>
         </div>
-    </div>
 
-    <div class="header-user">
-    </div>
+        <div class="header-status" title={isConnected ? "Connected" : "Disconnected"}>
+            <span class="status-dot" class:connected={isConnected} class:disconnected={!isConnected}></span>
+            <span class="status-text">{isConnected ? 'Online' : 'Offline'}</span>
+        </div>
     </div>
 </header>
 
@@ -508,5 +510,36 @@
     .undo-button:hover {
         background-color: rgba(255,255,255,0.1);
         border-radius: 4px;
+    }
+
+    .header-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        user-select: none;
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .status-dot.connected {
+        background-color: #52c41a; /* GREEN */
+        box-shadow: 0 0 8px rgba(82, 196, 26, 0.4);
+    }
+
+    .status-dot.disconnected {
+        background-color: #ff4d4f; /* RED */
+        box-shadow: 0 0 8px rgba(255, 77, 79, 0.4);
+    }
+
+    .status-text {
+        color: #666;
     }
 </style>
