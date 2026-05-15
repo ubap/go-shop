@@ -11,7 +11,13 @@
         completed: boolean;
     }
 
-    let items: Item[] = $state([]);
+    let initialData: Item[] = [];
+    if (typeof window !== 'undefined' && window.__INITIAL_DATA__) {
+        console.log('__INITIAL_DATA__:', window.__INITIAL_DATA__);
+        initialData = window.__INITIAL_DATA__;
+    }
+
+    let items: Item[] = $state(initialData);
     let newItem: string = $state("");
     let inputRef: HTMLInputElement | undefined = $state();
 
@@ -23,11 +29,6 @@
     let undoTimeout : ReturnType<typeof setTimeout> | undefined;
 
     $effect(() => {
-        console.log(window.__INITIAL_DATA__)
-        if (window.__INITIAL_DATA__) {
-            items = window.__INITIAL_DATA__;
-        }
-
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         let wsUrl = "";
         if (dev) {
@@ -156,13 +157,6 @@
 </header>
 
 <div class="shoplist-container">
-    {#if !isConnected}
-        <div class="connection-overlay" transition:fade={{ duration: 200 }}>
-            <div class="loader"></div>
-            <p class="loader-text">Connecting...</p>
-        </div>
-    {/if}
-
     <div class="input-group">
         <input
                 class="item-input"
