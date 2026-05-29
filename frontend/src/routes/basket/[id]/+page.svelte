@@ -224,47 +224,9 @@
         position: relative;
     }
 
-    .connection-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255, 255, 255, 0.75);
-        backdrop-filter: blur(2px);
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-    }
-
-    .loader {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #007bff;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        animation: spin 1s linear infinite;
-        margin-bottom: 12px;
-    }
-
-    .loader-text {
-        color: #007bff;
-        font-weight: 600;
-        margin: 0;
-    }
-
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
-    }
-
-    .header-title {
-        font-size: 1.5rem;
-        margin-bottom: 24px;
-        color: #333;
     }
 
     .input-group {
@@ -350,13 +312,7 @@
         transition: color 0.2s;
     }
 
-    .completed {
-        background-color: #f1f1f1;
-        border-color: #f1f1f1;
-        opacity: 0.7;
-    }
-
-    .completed .title {
+    .title {
         text-decoration: line-through;
         color: #888;
     }
@@ -429,13 +385,6 @@
         height: 32px;
     }
 
-    .header-user {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-    }
-
     .app-header {
         font-family: system-ui, -apple-system, sans-serif;
 
@@ -467,18 +416,18 @@
 
     .undo-toast {
         position: fixed;
-        bottom: 20px; /* Odstęp od dołu ekranu */
+        bottom: 20px;
         left: 50%;
-        transform: translateX(-50%); /* Centrowanie w poziomie */
+        transform: translateX(-50%); /* vertical center */
 
-        background-color: #333; /* Ciemne tło, żeby się odróżniało */
+        background-color: #333;
         color: white;
         padding: 12px 20px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         gap: 16px;
-        z-index: 9999; /* Musi być nad wszystkim innym */
+        z-index: 9999;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         min-width: 280px;
         justify-content: space-between;
@@ -493,7 +442,7 @@
     .undo-button {
         background: none;
         border: none;
-        color: #4dabf7; /* Jasnoniebieski kolor akcji */
+        color: #4dabf7;
         font-weight: 800;
         cursor: pointer;
         padding: 4px 8px;
