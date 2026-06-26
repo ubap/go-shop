@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"go-shop/backend/db"
 	"io/fs"
@@ -42,6 +43,9 @@ var roomsMu sync.Mutex
 var store db.Store
 
 func main() {
+	portPtr := flag.Int("p", 9090, "port")
+	flag.Parse()
+
 	sqliteStore, err := db.NewSqliteStore("db.sqlite")
 	if err != nil {
 		log.Fatal(err)
@@ -52,8 +56,8 @@ func main() {
 	http.Handle("/", SPAHandler())
 	http.HandleFunc("/ws", handleWebSocket)
 
-	fmt.Println("Running backend on :9090")
-	err = http.ListenAndServe(":9090", nil)
+	fmt.Println("Running backend on port:", *portPtr)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", *portPtr), nil)
 	if err != nil {
 		fmt.Println("Error", err)
 	}
